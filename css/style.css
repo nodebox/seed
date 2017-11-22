@@ -1,0 +1,73 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #f7f7f7;
+}
+
+body {
+    font: 14px sans-serif;
+    color: #333;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+}
+
+.app {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.toolbar {
+    height: 40px;
+    background: #ddd;
+}
+
+.editor {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor textarea {
+    width: 100%;
+    height: 100%;
+    color: inherit;
+    font: Menlo, monospace;
+    background: none;
+    border: none;
+    padding: 10px;
+    flex: 1;
+}
+
+.viewer {
+    border-left: 2px solid #ddd;
+    width: 50%;
+}
+
+.result {
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.toolbar button {
+    display: inline-block;
+    background: none;
+    border: none;
+    padding: 0 10px;
+    font: inherit;
+    color: inherit;
+    line-height: 40px;
+}
