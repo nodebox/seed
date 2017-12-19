@@ -61,9 +61,20 @@ class Home extends Component {
                 h(Link, {class: 'button', href: '/sketch'}, 'Create')
             ),
             h('div', {class: 'page'},
-                h('h1', {}, 'Gallery'),
-                h('div', {class: 'gallery'},
-                    thumbs
+                h('section', { class: 'intro' },
+                    h('p', { class: 'intro__large' },
+                        'PCG is a simple app for generating procedural content. Create generated text, shapes or images using web standards.'
+                    ),
+                    h('div', { class: 'intro__cta' },
+                        h(Link, { class: 'button primary', href:'/sketch' }, 'Get Started'),
+                        h(Link, { class: 'button', href:'/docs' }, 'Documentation')
+                    )
+                ),
+                h('section', { class: 'gallery' },
+                    h('h1', {}, 'Gallery'),
+                    h('div', {class: 'gallery'},
+                        thumbs
+                    )
                 )
             )
         );
@@ -104,6 +115,7 @@ class Sketch extends Component {
     }
 
     componentDidMount() {
+        document.querySelector('html').classList.add('fullscreen');
         if (!this.props.id) {
             this.generate();
         } else {
@@ -126,6 +138,10 @@ class Sketch extends Component {
             }
             return confirm;
         });
+    }
+
+    componentWillUnmount() {
+        document.querySelector('html').classList.remove('fullscreen');
     }
 
     onInput(e) {
@@ -198,11 +214,36 @@ class Sketch extends Component {
     }
 }
 
+class Docs extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { html: 'Loading...' };
+    }
+    render() {
+        return h('div', {class: 'app'},
+            h(Header, {},
+                h(Link, {class: 'button', href: '/sketch'}, 'Create')
+            ),
+            h('div', {class: 'page docs'},
+                h('div', {class: 'docs__content', dangerouslySetInnerHTML: { __html: this.state.html}})
+            )
+        );
+    }
+    componentDidMount() {
+        fetch(`/_docs/index.md`)
+            .then(res => res.text())
+            .then(text => {
+                const html = marked(text);
+                this.setState({ html });
+            });
+    }
+}
+
 class NotFound extends Component {
     render() {
         return h('div', {class: 'app'},
             h(Header, {}),
-            h('div', {class: 'page'},
+            h('div', {class: 'page centered'},
                 h('h1', {}, 'Page not found.'),
                 h(Link, {href: '/'}, 'Go Back Home')
             )
@@ -216,6 +257,7 @@ class App extends Component {
                 h(Home, { path: '/' }),
                 h(Sketch, { path: '/sketch' }),
                 h(Sketch, { path: '/sketch/:id' }),
+                h(Docs, { path: '/docs'}),
                 h(NotFound, { type: '404', default: true })
         );
     }
