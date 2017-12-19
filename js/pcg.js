@@ -83,6 +83,7 @@ const TAG_RE = new RegExp(`(${RegExp.escape(VARIABLE_TAG_START)}.*?${RegExp.esca
 
 const NUMBER_RANGE_RE = /^(-?\d+)\.\.(-?\d+)$/;
 const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
+const AMOUNT_RE = /^(.*?)\s*\*\s*(\d+)$/;
 
 const MAX_LEVEL = 50;
 
@@ -93,24 +94,26 @@ function evalPhrase(phraseBook, phrase, level=0) {
         if (token.type === TOKEN_TEXT) {
             s += token.text;
         } else {
-            let text;
-            const m1 = NUMBER_RANGE_RE.exec(token.text)
-            const m2 = CHAR_RANGE_RE.exec(token.text)
-            if (m1) {
-                const min = parseInt(m1[1]);
-                const max = parseInt(m1[2]);
-                text = Math.floor(rand(min, max));
-            } else if (m2) {
-                const min = m2[1].charCodeAt(0);
-                const max = m2[2].charCodeAt(0);
-                const charCode = Math.floor(rand(min, max));
-                text = String.fromCharCode(charCode);
-            } else {
-                const phrase = lookupPhrase(phraseBook, token.text);
-                text = evalPhrase(phraseBook, phrase, level + 1);
-                text = applyFilters(text, token.filters);
+            for (let i = 0; i < token.amount; i++) {
+                let text;
+                const m1 = NUMBER_RANGE_RE.exec(token.text)
+                const m2 = CHAR_RANGE_RE.exec(token.text)
+                if (m1) {
+                    const min = parseInt(m1[1]);
+                    const max = parseInt(m1[2]);
+                    text = Math.floor(rand(min, max));
+                } else if (m2) {
+                    const min = m2[1].charCodeAt(0);
+                    const max = m2[2].charCodeAt(0);
+                    const charCode = Math.floor(rand(min, max));
+                    text = String.fromCharCode(charCode);
+                } else {
+                    const phrase = lookupPhrase(phraseBook, token.text);
+                    text = evalPhrase(phraseBook, phrase, level + 1);
+                    text = applyFilters(text, token.filters);
+                }
+                s += text;
             }
-            s += text;
         }
     }
     return s;
@@ -120,9 +123,16 @@ class Token {
     constructor(text, type) {
         this.type = type;
         if (this.type === TOKEN_REF) {
-            const textWithoutTags = text.substring(2, text.length - 2).trim();
+            let amount = 1
+            let textWithoutTags = text.substring(2, text.length - 2).trim();
+            const m = AMOUNT_RE.exec(textWithoutTags);
+            if (m) {
+                textWithoutTags = m[1];
+                amount = parseInt(m[2]);
+            }
             const textAndFilters = textWithoutTags.split('|');
             this.text = textAndFilters[0];
+            this.amount = amount;
             this.filters = textAndFilters.slice(1);
         } else {
             this.text = text;
