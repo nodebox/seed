@@ -108,7 +108,11 @@ class Sketch extends Component {
         } else {
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
                 const sketch = { key: this.props.id, ...snap.val() };
-                this.setState({ loading: false, source: sketch.source });
+                let newState = { loading: false, source: sketch.source };
+                if (sketch.seed) {
+                    newState.seed = sketch.seed;
+                }
+                this.setState(newState);
                 this.generate();
             });
         }
@@ -132,11 +136,12 @@ class Sketch extends Component {
     onSave() {
         if (this.state.saving) return;
         this.setState({ saving: true });
+        let sketch = {};
+        sketch.source = this.state.source;
+        sketch.seed = this.state.seed
+        if (this.props.id) sketch.parent = this.props.id;
         const ref = firebase.database().ref('sketch').push();
-        ref.set({
-            parent: this.props.id,
-            source: this.state.source
-        }, () => {
+        ref.set(sketch, () => {
             this.setState({ saving: false, unsaved: false });
             route(`/sketch/${ref.key}`);
         });
