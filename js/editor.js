@@ -19,7 +19,8 @@ object:
 const GALLERY = [
     '-L0iXXTIHpU3fd0hXiEo',
     '-L0ibWrnaptySlFrOniw',
-    '-L0itqXixdWAyoBenEMk'
+    '-L0itqXixdWAyoBenEMk',
+    '-L0jDyf3m4YplgAenOKy'
 ];
 
 class SeedPicker extends Component {
