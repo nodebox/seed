@@ -48,8 +48,29 @@ function prevTextSeed(s) {
     return seedNumberToText(val - 1);
 }
 
+function applyFilters(s, filters) {
+    for (f of filters) {
+        if (f === 'upper') {
+            s = s.toUpperCase();
+        } else if (f === 'lower') {
+            s = s.toLowerCase();
+        } else if (f === 'title') {
+            s = s.toTitleCase();
+        } else if (f === 'sentence') {
+            s = s.substring(0, 1).toUpperCase() + s.substring(1);
+        } else {
+            throw new Error(`Unknown filter "${f}".`);
+        }
+    }
+    return s;
+}
+
 RegExp.escape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
+
+String.prototype.toTitleCase = function () {
+    return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 };
 
 const VARIABLE_TAG_START = '{{';
@@ -87,7 +108,7 @@ function evalPhrase(phraseBook, phrase, level=0) {
             } else {
                 const phrase = lookupPhrase(phraseBook, token.text);
                 text = evalPhrase(phraseBook, phrase, level + 1);
-                // TODO: apply filters
+                text = applyFilters(text, token.filters);
             }
             s += text;
         }
@@ -102,7 +123,7 @@ class Token {
             const textWithoutTags = text.substring(2, text.length - 2).trim();
             const textAndFilters = textWithoutTags.split('|');
             this.text = textAndFilters[0];
-            // this.filters = textAndFilters.
+            this.filters = textAndFilters.slice(1);
         } else {
             this.text = text;
         }
