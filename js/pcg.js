@@ -1,14 +1,26 @@
-VARIABLE_TAG_START = '{{';
-VARIABLE_TAG_END = '}}';
+function rand(min, max) {
+    return min + Math.random() * (max - min);
+}
 
-const TOKEN_TEXT = 'text';
-const TOKEN_REF = 'ref';
+function choice(l) {
+    const index = Math.floor(Math.random() * l.length);
+    return l[index];
+}
 
 RegExp.escape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
+const VARIABLE_TAG_START = '{{';
+const VARIABLE_TAG_END = '}}';
+
+const TOKEN_TEXT = 'text';
+const TOKEN_REF = 'ref';
+
 const TAG_RE = new RegExp(`(${RegExp.escape(VARIABLE_TAG_START)}.*?${RegExp.escape(VARIABLE_TAG_END)})`);
+
+const NUMBER_RANGE_RE = /^(-?\d+)\.\.(-?\d+)$/;
+const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
 
 function evalPhrase(phraseBook, phrase) {
     let s = '';
@@ -16,9 +28,24 @@ function evalPhrase(phraseBook, phrase) {
         if (token.type === TOKEN_TEXT) {
             s += token.text;
         } else {
-            const phrase = lookupPhrase(phraseBook, token.text);
-            const text = evalPhrase(phraseBook, phrase);
-            s += text; // TODO: apply filters
+            let text;
+            const m1 = NUMBER_RANGE_RE.exec(token.text)
+            const m2 = CHAR_RANGE_RE.exec(token.text)
+            if (m1) {
+                const min = parseInt(m1[1]);
+                const max = parseInt(m1[2]);
+                text = Math.floor(rand(min, max));
+            } else if (m2) {
+                const min = m2[1].charCodeAt(0);
+                const max = m2[2].charCodeAt(0);
+                const charCode = Math.floor(rand(min, max));
+                text = String.fromCharCode(charCode);
+            } else {
+                const phrase = lookupPhrase(phraseBook, token.text);
+                text = evalPhrase(phraseBook, phrase);
+                // TODO: apply filters
+            }
+            s += text;
         }
     }
     return s;
@@ -55,11 +82,6 @@ function tokenize(phrase) {
         inTag = !inTag;
     }
     return result;
-}
-
-function choice(l) {
-    const index = Math.floor(Math.random() * l.length);
-    return l[index];
 }
 
 function lookupPhrase(phraseBook, key) {
