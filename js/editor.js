@@ -134,6 +134,7 @@ class Sketch extends Component {
         this.setState({ saving: true });
         const ref = firebase.database().ref('sketch').push();
         ref.set({
+            parent: this.props.id,
             source: this.state.source
         }, () => {
             this.setState({ saving: false, unsaved: false });
