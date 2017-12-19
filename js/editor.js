@@ -71,7 +71,7 @@ class Home extends Component {
     renderThumb(id) {
         return h('div', {class: 'gallery__thumb'},
             h(Link, {class: 'gallery__link', href: `/sketch/${id}`},
-                h('img', {class: 'gallery__img', src: `/gallery/${id}.png`})
+                h('img', {class: 'gallery__img', src: `/gallery/${id}.jpg`})
             )
         );
     }
