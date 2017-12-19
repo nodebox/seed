@@ -17,6 +17,8 @@ object:
 `;
 
 const GALLERY = [
+    '-L0jLr9zuG9hCdjS-VE7',
+    '-L0jT5zaERgBPaf3P6LP',
     '-L0iXXTIHpU3fd0hXiEo',
     '-L0ibWrnaptySlFrOniw',
     '-L0itqXixdWAyoBenEMk',

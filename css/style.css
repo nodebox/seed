@@ -23,6 +23,10 @@ body {
     color: #333;
 }
 
+p {
+    margin-bottom: 1rem;
+}
+
 a {
     text-decoration: none;
     color: inherit;
