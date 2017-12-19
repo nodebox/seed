@@ -177,6 +177,47 @@ a {
     font-size: 0.8rem;
 }
 
+.seed-picker {
+    display: flex;
+}
+
+.seed-picker__prev {
+    background: #777 !important;
+    margin-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: 12px;
+}
+
+.seed-picker__next {
+    background: #777 !important;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: 12px;
+}
+
+.seed-picker__value {
+    background: #777 !important;
+    padding: 2px 4px;
+    border: 0;
+    border-top: 2px solid transparent;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.seed-picker__input {
+    outline: none;
+    font-size: 0.9rem;
+    width: 50px;
+    text-align: center;
+    font-family: "SF Mono", Menlo, monospace;
+    border: 0;
+    background: transparent;;
+    color: white;
+}
+
 .editor__panels {
     flex: 1;
     display: flex;

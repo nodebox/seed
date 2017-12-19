@@ -7,6 +7,47 @@ function choice(l) {
     return l[index];
 }
 
+function randomTextSeed() {
+    let seed = '';
+    for (let i = 0; i < 3; i++) {
+        const min = 'A'.charCodeAt(0);
+        const max = 'Z'.charCodeAt(0);
+        seed += String.fromCharCode(Math.round(rand(min, max)));
+    }
+    return seed;
+}
+
+function seedTextToNumber(s) {
+    let v = 0;
+    for (let i = 0; i < s.length; i++) {
+        v *= 26;
+        const c = s.charCodeAt(i) - 65;
+        v += c;
+    }
+    return v;
+}
+
+function seedNumberToText(v) {
+    let s = '';
+    while (v > 0) {
+        const digit = v % 26;
+        const c = String.fromCharCode(65 + digit);
+        s = c + s;
+        v = Math.floor(v / 26);
+    }
+    return s;
+}
+
+function nextTextSeed(s) {
+    const val = seedTextToNumber(s);
+    return seedNumberToText(val + 1);
+}
+
+function prevTextSeed(s) {
+    const val = seedTextToNumber(s);
+    return seedNumberToText(val - 1);
+}
+
 RegExp.escape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
