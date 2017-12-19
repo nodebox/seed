@@ -18,7 +18,8 @@ object:
 
 const GALLERY = [
     '-L0iXXTIHpU3fd0hXiEo',
-    '-L0ibWrnaptySlFrOniw'
+    '-L0ibWrnaptySlFrOniw',
+    '-L0itqXixdWAyoBenEMk'
 ];
 
 let gApp;
