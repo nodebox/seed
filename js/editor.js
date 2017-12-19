@@ -25,6 +25,7 @@ const GALLERY = [
     '-L0jGl9IhooqRuTF9wxS',
     '-L0jJStwcqMNLIN7H_3w',
     '-L0kGLkGKVe9Iuid9jzC',
+    '-L0ktGjsgAqsUmbsNk81',
 ];
 
 class SeedPicker extends Component {
