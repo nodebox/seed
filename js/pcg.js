@@ -63,7 +63,10 @@ const TAG_RE = new RegExp(`(${RegExp.escape(VARIABLE_TAG_START)}.*?${RegExp.esca
 const NUMBER_RANGE_RE = /^(-?\d+)\.\.(-?\d+)$/;
 const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
 
-function evalPhrase(phraseBook, phrase) {
+const MAX_LEVEL = 50;
+
+function evalPhrase(phraseBook, phrase, level=0) {
+    if (level > MAX_LEVEL) return '';
     let s = '';
     for (let token of tokenize(phrase)) {
         if (token.type === TOKEN_TEXT) {
@@ -83,7 +86,7 @@ function evalPhrase(phraseBook, phrase) {
                 text = String.fromCharCode(charCode);
             } else {
                 const phrase = lookupPhrase(phraseBook, token.text);
-                text = evalPhrase(phraseBook, phrase);
+                text = evalPhrase(phraseBook, phrase, level + 1);
                 // TODO: apply filters
             }
             s += text;
@@ -128,7 +131,7 @@ function tokenize(phrase) {
 function lookupPhrase(phraseBook, key) {
     const v = phraseBook[key];
     if (v === undefined) {
-        throw new Error(`Could not find phrase with key "${key}"`);
+        throw new Error(`Could not find phrase with key "${key}".`);
     }
     console.assert(Array.isArray(v));
     return choice(v);
