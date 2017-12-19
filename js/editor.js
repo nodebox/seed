@@ -22,8 +22,6 @@ const GALLERY = [
     '-L0itqXixdWAyoBenEMk'
 ];
 
-let gApp;
-
 class SeedPicker extends Component {
     onInput(e) {
         const text = e.target.value;
@@ -86,7 +84,6 @@ class Sketch extends Component {
             state.loading = true;
         }
         this.state = state;
-        gApp = this;
     }
 
     generate() {
