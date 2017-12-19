@@ -94,4 +94,4 @@ root:
 - ...more content here...
 ```
 
-Each of those sentence tokens will be replaced with a random sentence. Every time we evaluate this the system will choose a different option (this is random, so it's possible that the system will accidentally pick the same one twice. Just choose a different variation if that happens).
+Each of those sentence tokens will be replaced with a random sentence. Every time we evaluate this the system will choose a different option. Because this is random it's possible that the system will accidentally pick the same one twice. Just choose a different variation if that happens.

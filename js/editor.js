@@ -217,7 +217,7 @@ class Sketch extends Component {
 class Docs extends Component {
     constructor(props) {
         super(props);
-        this.state = { html: 'Loading...' };
+        this.state = { page: undefined, html: 'Loading...' };
     }
     render() {
         return h('div', {class: 'app'},
@@ -225,17 +225,35 @@ class Docs extends Component {
                 h(Link, {class: 'button', href: '/sketch'}, 'Create')
             ),
             h('div', {class: 'page docs'},
-                h('div', {class: 'docs__content', dangerouslySetInnerHTML: { __html: this.state.html}})
+                h('div', {class: 'docs__nav'},
+                    h('ul', {},
+                        h('li', { class: 'docs__header' }, 'Documentation'),
+                        h('li', {}, h(Link, { href: '/docs' }, 'Getting Started')),
+                        h('li', {}, h(Link, { href: '/docs/graphics' }, 'Generating Graphics')),
+                    )
+                ),
+                h('div', {class: 'docs__body', dangerouslySetInnerHTML: { __html: this.state.html}})
             )
         );
     }
-    componentDidMount() {
-        fetch(`/_docs/index.md`)
+
+    onPage() {
+        if (this.state.page === this.props.page) return;
+        const page = this.props.page || 'index';
+        fetch(`/_docs/${page}.md`)
             .then(res => res.text())
             .then(text => {
                 const html = marked(text);
-                this.setState({ html });
+                this.setState({ page: this.props.page, html });
             });
+    }
+
+    componentDidMount() {
+        this.onPage();
+    }
+
+    componentDidUpdate() {
+        this.onPage();
     }
 }
 
@@ -257,7 +275,8 @@ class App extends Component {
                 h(Home, { path: '/' }),
                 h(Sketch, { path: '/sketch' }),
                 h(Sketch, { path: '/sketch/:id' }),
-                h(Docs, { path: '/docs'}),
+                h(Docs, { path: '/docs', page: 'index'}),
+                h(Docs, { path: '/docs/:page'}),
                 h(NotFound, { type: '404', default: true })
         );
     }

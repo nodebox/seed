@@ -160,6 +160,10 @@ a {
     border-bottom: 2px solid rgba(0, 0, 0, 0.2);
 }
 
+.intro__cta .button:hover {
+    border-bottom-color: rgba(0, 0, 0, 0.5);
+}
+
 .intro__cta .button.primary {
     background: #6a6;
 }
@@ -313,40 +317,81 @@ a {
 .docs {
     background: #f7f7f7;
     color: #444;
+    display: flex;
+    flex-direction: row;
+    flex: 1;
 }
 
-.docs__content {
-    padding: 1rem 15px;
+.docs__nav {
+    width: 300px;
+    border-right: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.docs__nav ul {
+    list-style: none;
+}
+
+.docs__nav li {
+    padding: 10px 15px;
+}
+
+.docs__nav li.docs__header {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.docs__nav li a {
+    display: block;
+    border-bottom: none !important;
+}
+
+.docs__body {
+    flex: 1;
+    min-height: 100%;
+    padding: 20px 30px;
     max-width: 50rem;
 }
 
-.docs__content h2 {
+.docs__body h2 {
     font-weight: 200;
     font-size: 1.2rem;
     line-height: 1.5;
 }
 
-.docs__content p {
+.docs__body p, .docs__body li {
     line-height: 1.5;
 }
 
-.docs__content a {
+.docs__body img {
+    height: 200px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.docs__body a {
     border-bottom-color: rgba(0, 0, 0, 0.2);
 }
 
-.docs__content pre {
+.docs__body a.noline {
+    border-bottom: none !important;
+}
+
+.docs__body pre {
     margin-bottom: 1rem;
     background: white;
     padding: 5px;
     color: #666;
     border-radius: 3px;
+    font-size: 12px;
 }
 
-.docs__content code {
+.docs__body code {
     font-family: "SF Mono", Menlo, monospace;
 }
 
-.docs__content blockquote {
+.docs__body blockquote {
     background: #6a6;
     color: white;
     padding: 1rem 1rem 0.2rem 1rem;
