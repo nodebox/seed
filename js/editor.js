@@ -93,7 +93,7 @@ class Sketch extends Component {
         try {
             const phraseBook = parsePhraseBook(this.state.source);
             const result = generateString(phraseBook);
-            this.setState({ result: result });
+            this.setState({ result: result, debugOutput: '' });
             //this.setState({ debugOutput: JSON.stringify(phraseBook, null, 4) });
         } catch (e) {
             this.setState({ debugOutput: e.message });
@@ -163,7 +163,7 @@ class Sketch extends Component {
     }
 
     render(props, state) {
-        const debugView = h('pre', { className: 'editor__debug' }, this.state.debugOutput);
+        const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
         const source = state.loading ? 'Loading...' : state.source;
         let saveLabel = state.saving ? 'Saving...' : 'Save';
         return h('div', {class: 'app'},
