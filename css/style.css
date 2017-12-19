@@ -1,4 +1,6 @@
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -17,57 +19,148 @@ body {
     color: #333;
 }
 
-#app {
-    width: 100%;
-    height: 100%;
+a {
+    text-decoration: none;
+    color: inherit;
 }
+
+/* Components */
+
+.button {
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.2;
+    display: inline-block;
+    outline: 0;
+    padding: 9px 19px;
+    margin: 0 10px 0 0;
+    border-radius: 3px;
+    border: 0;
+    border-top: 2px solid transparent;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+    background: #555;
+    color: white;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+    user-select: none;
+}
+
+.button:active {
+    transform: translateY(1px);
+}
+
+/* App */
 
 .app {
     width: 100%;
     height: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
 }
 
-.toolbar {
-    height: 40px;
-    background: #ddd;
+/* Header */
+
+.header {
+    height: 65px;
+    display: flex;
+    flex-direction: row;
+    background: #222;
+    xxborder-bottom: 1px solid #333;
+    color: #eee;
+    width: 100%;
 }
+
+.header__logo {
+    margin-left: 1rem;
+    flex: 1;
+    align-self: center;
+    font-size: 14px;
+    font-weight: 200;
+    letter-spacing: 1rem;
+}
+
+.header__nav {
+    align-self: center;
+    justify-self: flex-end;
+}
+
+/* Page */
+
+.page {
+    flex: 1;
+    xbackground: radial-gradient(circle farthest-corner at 50%, #444, #000);
+    background: linear-gradient(0deg, #000, #222);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+/* Editor */
 
 .editor {
-    width: 50%;
-    height: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.editor textarea {
+
+.editor__toolbar {
+    height: 40px;
+    background: #666;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 10px;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+    border-top: 1px solid #777;
+    border-bottom: 2px solid #555;
+}
+
+.editor__toolbar .button {
+    padding: 5px 8px;
+    background: #6a6;
+    font-size: 0.8rem;
+}
+
+.editor__panels {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+}
+
+.editor__source {
+    flex: 1;
+}
+
+.editor__viewer {
+    flex: 1;
+}
+
+.editor__area {
     width: 100%;
     height: 100%;
     color: inherit;
-    font: Menlo, monospace;
+    font-family: "SF Mono", Menlo, monospace;
     background: none;
+    outline: none;
     border: none;
     padding: 10px;
     flex: 1;
 }
 
-.viewer {
+.editor__viewer {
     border-left: 2px solid #ddd;
     width: 50%;
 }
 
-.result {
+.editor__result {
     padding: 10px;
     overflow-y: auto;
-}
-
-.toolbar button {
-    display: inline-block;
-    background: none;
-    border: none;
-    padding: 0 10px;
-    font: inherit;
-    color: inherit;
-    line-height: 40px;
 }

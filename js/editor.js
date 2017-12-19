@@ -1,4 +1,5 @@
 const { h, render, Component } = preact;
+const { Router, Link } = preactRouter;
 
 const INITIAL_TEXT = `root:
 - Dear {{ giver }}, thank you for the {{ object }}.
@@ -17,7 +18,29 @@ object:
 
 let gApp;
 
-class App extends Component {
+class Header extends Component {
+    render(props) {
+        return h('header', {class: 'header'},
+            h(Link, {class: 'header__logo', href: '/'}, 'PCG'),
+            h('nav', {class: 'header__nav'}, props.children)
+        );
+    }
+}
+
+class Home extends Component {
+    render(props, state) {
+        return h('div', {class: 'app'},
+            h(Header, {},
+                h(Link, {class: 'button', href: '/sketch'}, 'Create')
+            ),
+            h('div', {class: 'page'},
+                h('h1', {}, 'Click the "create" button to create a new sketch.')
+            )
+        );
+    }
+}
+
+class Sketch extends Component {
     constructor() {
         super();
         this.state = { source: INITIAL_TEXT, debug: true, debugOutput: '', result: '' };
@@ -29,7 +52,7 @@ class App extends Component {
             const phraseBook = parsePhraseBook(this.state.source);
             const result = generateString(phraseBook);
             this.setState({ result: result });
-            this.setState({ debugOutput: JSON.stringify(phraseBook, null, 4) });
+            //this.setState({ debugOutput: JSON.stringify(phraseBook, null, 4) });
         } catch (e) {
             this.setState({ debugOutput: e.message });
         }
@@ -45,26 +68,51 @@ class App extends Component {
         this.generate();
     }
 
+    onSave() {
+        // FIXME: save the content
+    }
+
     render(props, state) {
         const debugView = h('pre', { className: 'debug' }, this.state.debugOutput);
-        return h(
-            'div',
-            { className: 'app' },
-            h(
-                'div',
-                { className: 'editor' },
-                h('div', { className: 'toolbar' }, h('button', { onClick: this.generate.bind(this) }, 'Generate')),
-                h('textarea', { className: 'source', value: state.source, onInput: this.onInput.bind(this) }),
-                debugView
+        return h('div', {class: 'app'},
+            h(Header, {},
+                h('button', {class: 'button', onClick: this.onSave.bind(this)}, 'Save')
             ),
-            h(
-                'div',
-                { className: 'viewer' },
-                h('div', { className: 'toolbar' }),
-                h('div', { className: 'result', dangerouslySetInnerHTML: { __html: this.state.result } })
+            h('div', { className: 'editor' },
+                h('div', { className: 'editor__toolbar' }, h('button', { class: 'button', onClick: this.generate.bind(this) }, 'Generate')),
+                h('div', { className: 'editor__panels'},
+                    h('div', { className: 'editor__source' },
+                        h('textarea', { className: 'editor__area', value: state.source, onInput: this.onInput.bind(this) }),
+                        debugView
+                    ),
+                    h('div', { className: 'editor__viewer' },
+                        h('div', { className: 'editor__result', dangerouslySetInnerHTML: { __html: this.state.result } })
+                    )
+                )
             )
         );
     }
 }
 
-render(h(App), document.getElementById('app'));
+class NotFound extends Component {
+    render() {
+        return h('div', {class: 'app'},
+            h(Header, {}),
+            h('div', {class: 'page'},
+                h('h1', {}, 'Page not found.')
+            )
+        );
+    }
+}
+
+class App extends Component {
+    render() {
+        return h(Router, {},
+                h(Home, { path: '/' }),
+                h(Sketch, { path: '/sketch' }),
+                h(NotFound, { type: '404', default: true })
+        );
+    }
+}
+
+render(h(App), document.body);
