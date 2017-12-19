@@ -15,4 +15,7 @@ The app runs as a single-page application, so we use [serve](https://www.npmjs.c
 
 ## Deploy
 
-    surge -d pcg .
+    npm install -g firebase-tools
+    firebase login
+    firebase init
+    firebase deploy
