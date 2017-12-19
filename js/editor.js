@@ -35,7 +35,6 @@ class Header extends Component {
 class Home extends Component {
     render(props, state) {
         const thumbs = GALLERY.map(id => this.renderThumb(id));
-        console.log(thumbs);
         return h('div', {class: 'app'},
             h(Header, {},
                 h(Link, {class: 'button', href: '/sketch'}, 'Create')
@@ -84,7 +83,6 @@ class Sketch extends Component {
         if (!this.props.id) {
             this.generate();
         } else {
-            console.log('loading from database', this.props.id);
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
                 const sketch = { key: this.props.id, ...snap.val() };
                 this.setState({ loading: false, source: sketch.source });
