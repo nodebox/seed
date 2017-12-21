@@ -271,7 +271,7 @@ class Sketch extends Component {
 
 class Embed extends Component {
     render(props) {
-        const link = h('a', { href:`/sketch/${ props.id }`, target: '_blank' }, 'Open in seperate window');
+        const link = h('a', { href:`/sketch/${ props.id }`, target: '_blank' }, 'Open in new window');
         return h('div', {class: 'app'},
             h(Editor, { id: props.id, headerRight: link })
         );
