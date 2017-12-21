@@ -86,9 +86,14 @@ const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
 const AMOUNT_RE = /^(.*?)\s*\*\s*(\d+)$/;
 
 const MAX_LEVEL = 50;
+const TIMEOUT_MILLIS = 50;
 
-function evalPhrase(phraseBook, phrase, level=0) {
+function evalPhrase(phraseBook, phrase, level=0, startTime=0) {
     if (level > MAX_LEVEL) return '';
+    const t = Date.now();
+    if (startTime > 0 && t - startTime > TIMEOUT_MILLIS) {
+        throw new Error('Evaluation timed out. Do you have a recursive function?');
+    }
     let s = '';
     for (let token of tokenize(phrase)) {
         if (token.type === TOKEN_TEXT) {
@@ -109,7 +114,7 @@ function evalPhrase(phraseBook, phrase, level=0) {
                     text = String.fromCharCode(charCode);
                 } else {
                     const phrase = lookupPhrase(phraseBook, token.text);
-                    text = evalPhrase(phraseBook, phrase, level + 1);
+                    text = evalPhrase(phraseBook, phrase, level + 1, startTime);
                     text = applyFilters(text, token.filters);
                 }
                 s += text;
@@ -203,5 +208,6 @@ function parsePhraseBook(s) {
 
 function generateString(phraseBook, rootKey = 'root', seed = 1234) {
     Math.seedrandom(seed);
-    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey));
+    const startTime = Date.now();
+    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey), 0, startTime);
 }
