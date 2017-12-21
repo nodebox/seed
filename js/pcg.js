@@ -202,5 +202,6 @@ function parsePhraseBook(s) {
 }
 
 function generateString(phraseBook, rootKey = 'root', seed = 1234) {
+    Math.seedrandom(seed);
     return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey));
 }

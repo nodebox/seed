@@ -121,10 +121,9 @@ class Sketch extends Component {
     }
 
     generate() {
-        Math.seedrandom(this.state.seed);
         try {
             const phraseBook = parsePhraseBook(this.state.source);
-            const result = generateString(phraseBook);
+            const result = generateString(phraseBook, 'root', this.state.seed);
             this.setState({ result: result, debugOutput: '' });
             //this.setState({ debugOutput: JSON.stringify(phraseBook, null, 4) });
         } catch (e) {
