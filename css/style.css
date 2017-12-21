@@ -225,6 +225,17 @@ a {
     font-size: 0.8rem;
 }
 
+.editor__toolbar-right {
+    flex: 1;
+    text-align: right;
+}
+
+.editor__toolbar-right a {
+    color: white;
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
 .seed-picker {
     display: flex;
 }
@@ -365,7 +376,7 @@ a {
 }
 
 .docs__body img {
-    height: 200px;
+    height: 300px;
     border: 1px solid #ddd;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
@@ -398,6 +409,11 @@ a {
     font-size: 18px;
     border-radius: 10px;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.docs__body iframe {
+    border: 1px solid #ddd;
     margin-bottom: 1rem;
 }
 
