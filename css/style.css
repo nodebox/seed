@@ -375,6 +375,10 @@ a {
     line-height: 1.5;
 }
 
+.docs__body ul {
+    margin-bottom: 1rem;
+}
+
 .docs__body img {
     height: 300px;
     border: 1px solid #ddd;
@@ -415,5 +419,7 @@ a {
 .docs__body iframe {
     border: 1px solid #ddd;
     margin-bottom: 1rem;
+    width: 100%;
+    height: 400px;
 }
 

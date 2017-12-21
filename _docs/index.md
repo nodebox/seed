@@ -2,23 +2,11 @@
 
 PCG generates new, random content based on a set of *rules* you define. These rules always generate text. But because we're on the web, this text can also be HTML code or SVG graphics. PCG uses a system called a [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
 
-Here is a simple example that is also displayed when [creating a new sketch](/sketch):
+Here is a simple example that generates "thank you" notes (it is also displayed when [creating a new sketch](/sketch)):
 
-```
-root:
-- Dear {{ giver }}, thank you for the {{ object }}.
-- Hey {{ giver }}, thanks for the {{ object }}!
+<iframe src="/embed/-L0tnl8CMxUtqA9_cIKd"></iframe>
 
-giver:
-- Aunt Emma
-- Dave and Edna
-- Uncle Bob
-
-object:
-- purple vase
-- golden retriever
-- dishwasher
-```
+You can generate new variations using the "Generate" button (try it now!). Each variation has a unique *seed*, which consists of three letters. You can browse through the different variations using the arrows next to the seed value in the toolbar.
 
 The `root:` element is special. PCG will always look for a `root:` element when generating new content. This is the *start* of your document. Beneath this line there are two options that start with a `-`. When generating content, PCG will *choose one of these options*. The more options you give, the more freedom the system has to choose between.
 
@@ -80,11 +68,11 @@ We now have everything to assemble the final sentence:
 Dear Uncle Bob, thank you for the golden retriever.
 ```
 
-This is enough to do simple text generation. By making our replacements more complex, we can create huge grammar files. For example here is a [Immanuel Kant philosophy generator](/sketch/-L0jT5zaERgBPaf3P6LP). Note that we use the exact same system as in this simple example. We just have much more options to choose from, and each of those contain choices as well, and so on.
+This is enough to do simple text generation. By making our replacements more complex, we can create huge grammar files. For example here is a Immanuel Kant philosophy generator:
 
-The result sounds, well, *Kant*-ish:
+<iframe src="/embed/-L0jT5zaERgBPaf3P6LP"></iframe>
 
-_As we have already seen, to avoid all misapprehension, it is necessary to explain that the paralogisms of pure reason (and we can deduce that this is the case), however, prove the validity of the Ideal of natural reason natural causes; in the case of our experience, the never-ending regress in the series of empirical conditions (and there can be no doubt that this is true), in reference to ends, constitutes the whole content for the Ideal of human reason the phenomena._
+Note that this uses the exact same system as in this simple example. We just have *much more* options to choose from, and each of those contain choices as well, and so on.
 
 It's interesting to see how this is built up. Because we want the text to have multiple sentences, we render a number of `{{ sentence }}` tokens in the root:
 
