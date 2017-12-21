@@ -107,10 +107,10 @@ class Home extends Component {
     }
 }
 
-class Sketch extends Component {
+class Editor extends Component {
     constructor(props) {
         super(props);
-        let state = { debug: true, debugOutput: '', result: '', unsaved: false, seed: randomTextSeed() };
+        let state = { debug: true, debugOutput: '', result: '', seed: randomTextSeed() };
         if (!props.id) {
             state.source = INITIAL_TEXT;
         } else {
@@ -143,10 +143,91 @@ class Sketch extends Component {
                     newState.seed = sketch.seed;
                 }
                 this.setState(newState);
+                if (this.props.onSourceChanged) {
+                    this.props.onSourceChanged(sketch.source, true);
+                }
+                if (this.props.onSeedChanged) {
+                    this.props.onSeedChanged(newState.seed);
+                }
                 this.generate();
             });
         }
+    }
 
+    componentWillUnmount() {
+        document.querySelector('html').classList.remove('fullscreen');
+    }
+
+    onInput(e) {
+        const source = e.target.value;
+        this.setState({ source });
+        if (this.props.onSourceChanged) {
+            this.props.onSourceChanged(source);
+        }
+        this.generate();
+    }
+
+    onSetSeed(seed) {
+        this.setState({seed});
+        if (this.props.onSeedChanged) {
+            this.props.onSeedChanged(seed);
+        }
+        this.generate();
+    }
+
+    onGenerate() {
+        let seed = nextTextSeed(this.state.seed);
+        this.onSetSeed(seed);
+    }
+
+    onNextSeed() {
+        let seed = nextTextSeed(this.state.seed);
+        this.onSetSeed(seed);
+    }
+
+    onPrevSeed() {
+        let seed = prevTextSeed(this.state.seed);
+        this.onSetSeed(seed);
+    }
+
+    render(props, state) {
+        const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
+        const source = state.loading ? 'Loading...' : state.source;
+        return h('div', { className: 'editor' },
+            h('div', { className: 'editor__toolbar' },
+                h('button', { class: 'button', onClick: this.onGenerate.bind(this) }, 'Generate'),
+                h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
+            ),
+            h('div', { className: 'editor__panels'},
+                h('div', { className: 'editor__source' },
+                    h('textarea', { className: 'editor__area', value: source, onInput: this.onInput.bind(this), readonly: state.loading }),
+                        debugView
+                ),
+                h('div', { className: 'editor__viewer' },
+                    h('div', { className: 'editor__result', dangerouslySetInnerHTML: { __html: this.state.result } })
+                )
+            )
+        );
+    }
+}
+
+Editor.prototype.onInput = debounce(Editor.prototype.onInput, 200);
+
+class Sketch extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { saving: false, unsaved: false, source: undefined, seed: undefined };
+    }
+
+    onSourceChanged(source, initialLoad) {
+        this.setState({ unsaved: !initialLoad, source });
+    }
+
+    onSeedChanged(seed) {
+        this.setState({ seed });
+    }
+
+    componentDidMount() {
         window.addEventListener('beforeunload', (e) => {
             let confirm = null;
             if (this.state.unsaved) {
@@ -157,22 +238,12 @@ class Sketch extends Component {
         });
     }
 
-    componentWillUnmount() {
-        document.querySelector('html').classList.remove('fullscreen');
-    }
-
-    onInput(e) {
-        const source = e.target.value;
-        this.setState({ unsaved: true, source });
-        this.generate();
-    }
-
     onSave() {
         if (this.state.saving) return;
         this.setState({ saving: true });
         let sketch = {};
         sketch.source = this.state.source;
-        sketch.seed = this.state.seed
+        sketch.seed = this.state.seed;
         if (this.props.id) sketch.parent = this.props.id;
         const ref = firebase.database().ref('sketch').push();
         ref.set(sketch, () => {
@@ -181,57 +252,28 @@ class Sketch extends Component {
         });
     }
 
-    onGenerate() {
-        let seed = nextTextSeed(this.state.seed);
-        this.setState({seed});
-        this.generate();
-    }
-
-    onSetSeed(seed) {
-        this.setState({seed});
-        this.generate();
-    }
-
-    onNextSeed() {
-        let seed = nextTextSeed(this.state.seed);
-        this.setState({seed});
-        this.generate();
-    }
-
-    onPrevSeed() {
-        let seed = prevTextSeed(this.state.seed);
-        this.setState({seed});
-        this.generate();
-    }
-
     render(props, state) {
-        const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
-        const source = state.loading ? 'Loading...' : state.source;
         let saveLabel = state.saving ? 'Saving...' : 'Save';
         return h('div', {class: 'app'},
             h(Header, {},
                 h('button', {class: 'button' + (state.unsaved ? ' unsaved' : ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
             ),
-            h('div', { className: 'editor' },
-                h('div', { className: 'editor__toolbar' },
-                    h('button', { class: 'button', onClick: this.onGenerate.bind(this) }, 'Generate'),
-                    h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
-                ),
-                h('div', { className: 'editor__panels'},
-                    h('div', { className: 'editor__source' },
-                        h('textarea', { className: 'editor__area', value: source, onInput: this.onInput.bind(this), readonly: state.loading }),
-                        debugView
-                    ),
-                    h('div', { className: 'editor__viewer' },
-                        h('div', { className: 'editor__result', dangerouslySetInnerHTML: { __html: this.state.result } })
-                    )
-                )
-            )
+            h(Editor, {
+                id: props.id,
+                onSourceChanged: this.onSourceChanged.bind(this),
+                onSeedChanged: this.onSeedChanged.bind(this)
+            })
         );
     }
 }
 
-Sketch.prototype.onInput = debounce(Sketch.prototype.onInput, 200);
+class Embed extends Component {
+    render(props) {
+        return h('div', {class: 'app'},
+            h(Editor, { id: props.id })
+        );
+    }
+}
 
 class Docs extends Component {
     constructor(props) {
@@ -294,6 +336,8 @@ class App extends Component {
                 h(Home, { path: '/' }),
                 h(Sketch, { path: '/sketch' }),
                 h(Sketch, { path: '/sketch/:id' }),
+                h(Embed, { path: '/embed' }),
+                h(Embed, { path: '/embed/:id' }),
                 h(Docs, { path: '/docs', page: 'index'}),
                 h(Docs, { path: '/docs/:page'}),
                 h(NotFound, { type: '404', default: true })
