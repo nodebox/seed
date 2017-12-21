@@ -39,10 +39,13 @@ const GALLERY = [
     '-L0kp-8ncfHFX_pBOr6l',
     '-L0jGl9IhooqRuTF9wxS',
     '-L0jJStwcqMNLIN7H_3w',
+    '-L0tkJ8uwpSeFdB0_2J4',
     '-L0kGLkGKVe9Iuid9jzC',
     '-L0ktGjsgAqsUmbsNk81',
     '-L0l40nqLEV237kNmUX5',
     '-L0l7fV1tlR0Gobb64AM',
+    '-L0pQ_yU-SGVmDoRMfsF',
+    '-L0tTX3tlVpqHX6Umym4',
 ];
 
 class SeedPicker extends Component {
