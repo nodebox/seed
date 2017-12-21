@@ -134,6 +134,9 @@ class Editor extends Component {
     componentDidMount() {
         document.querySelector('html').classList.add('fullscreen');
         if (!this.props.id) {
+            if (this.props.onSourceChanged) {
+                this.props.onSourceChanged(INITIAL_TEXT, true);
+            }
             this.generate();
         } else {
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
@@ -263,7 +266,8 @@ class Sketch extends Component {
             h(Editor, {
                 id: props.id,
                 onSourceChanged: this.onSourceChanged.bind(this),
-                onSeedChanged: this.onSeedChanged.bind(this)
+                onSeedChanged: this.onSeedChanged.bind(this),
+                headerRight: h('a', { href:'/docs', target: '_blank' }, 'Documentation')
             })
         );
     }
