@@ -1,6 +1,20 @@
 const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        const context = this;
+        const args = arguments;
+        const later = function() {
+            timeout = null;
+            func.apply(context, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 const INITIAL_TEXT = `root:
 - Dear {{ giver }}, thank you for the {{ object }}.
 - Hey {{ giver }}, thanks for the {{ object }}!
@@ -217,6 +231,8 @@ class Sketch extends Component {
         );
     }
 }
+
+Sketch.prototype.onInput = debounce(Sketch.prototype.onInput, 200);
 
 class Docs extends Component {
     constructor(props) {
