@@ -193,10 +193,12 @@ class Editor extends Component {
     render(props, state) {
         const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
         const source = state.loading ? 'Loading...' : state.source;
+        const headerRight = props.headerRight ? h('span', { className: 'editor__toolbar-right' }, props.headerRight) : null;
         return h('div', { className: 'editor' },
             h('div', { className: 'editor__toolbar' },
                 h('button', { class: 'button', onClick: this.onGenerate.bind(this) }, 'Generate'),
-                h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
+                h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) }),
+                headerRight
             ),
             h('div', { className: 'editor__panels'},
                 h('div', { className: 'editor__source' },
@@ -269,8 +271,9 @@ class Sketch extends Component {
 
 class Embed extends Component {
     render(props) {
+        const link = h('a', { href:`/sketch/${ props.id }`, target: '_blank' }, 'Open in seperate window');
         return h('div', {class: 'app'},
-            h(Editor, { id: props.id })
+            h(Editor, { id: props.id, headerRight: link })
         );
     }
 }
@@ -291,6 +294,7 @@ class Docs extends Component {
                         h('li', { class: 'docs__header' }, 'Documentation'),
                         h('li', {}, h(Link, { href: '/docs' }, 'Getting Started')),
                         h('li', {}, h(Link, { href: '/docs/graphics' }, 'Generating Graphics')),
+                        h('li', {}, h(Link, { href: '/docs/recursion' }, 'Recursion')),
                     )
                 ),
                 h('div', {class: 'docs__body', dangerouslySetInnerHTML: { __html: this.state.html}})
