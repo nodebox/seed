@@ -16,7 +16,7 @@ The `circle:` block consists of a single option with a [&lt;circle&gt;](https://
 - **fill** defines the fill color of the circle. There are many ways in which we can [specify colors](https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Fills_and_Strokes): using predefined names, through RGB or HSL values, or using hexadecimal codes. If you're familiar with CSS colors, this is exactly the same.
 - **stroke** defines the stroke color of the circle. We use a stroke color here so the overlapping circles don't turn into a big red blob. If we want we can also specify the `stroke-width` to set the line width of the stroke.
 
-What else can we generate? SVG has support for lines, paths, rectangles, circles and text.
+What else can we generate? SVG has support for lines, paths, rectangles, circles and text. We will show some examples below but you can easily find [more documentation on SVG](https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Basic_Shapes).
 
 ## Lines
 
