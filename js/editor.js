@@ -65,7 +65,7 @@ class SeedPicker extends Component {
 class Header extends Component {
     render(props) {
         return h('header', {class: 'header'},
-            h(Link, {class: 'header__logo', href: '/'}, 'PCG'),
+            h('a', {class: 'header__logo', href: '/'}, 'PCG'),
             h('nav', {class: 'header__nav'}, props.children)
         );
     }
@@ -76,7 +76,7 @@ class Home extends Component {
         const thumbs = GALLERY.map(id => this.renderThumb(id));
         return h('div', {class: 'app'},
             h(Header, {},
-                h(Link, {class: 'button', href: '/sketch'}, 'Create')
+                h('a', {class: 'button', href: '/sketch'}, 'Create')
             ),
             h('div', {class: 'page'},
                 h('section', { class: 'intro' },
@@ -84,8 +84,8 @@ class Home extends Component {
                         'PCG is a simple app for generating procedural content. Create generated text, shapes or images using web standards.'
                     ),
                     h('div', { class: 'intro__cta' },
-                        h(Link, { class: 'button primary', href:'/sketch' }, 'Get Started'),
-                        h(Link, { class: 'button', href:'/docs' }, 'Documentation')
+                        h('a', { class: 'button primary', href:'/sketch' }, 'Get Started'),
+                        h('a', { class: 'button', href:'/docs' }, 'Documentation')
                     )
                 ),
                 h('section', { class: 'gallery' },
@@ -100,7 +100,7 @@ class Home extends Component {
 
     renderThumb(id) {
         return h('div', {class: 'gallery__thumb'},
-            h(Link, {class: 'gallery__link', href: `/sketch/${id}`},
+            h('a', {class: 'gallery__link', href: `/sketch/${id}`},
                 h('img', {class: 'gallery__img', src: `/gallery/${id}.jpg`})
             )
         );
@@ -286,7 +286,7 @@ class Docs extends Component {
     render() {
         return h('div', {class: 'app'},
             h(Header, {},
-                h(Link, {class: 'button', href: '/sketch'}, 'Create')
+                h('a', {class: 'button', href: '/sketch'}, 'Create')
             ),
             h('div', {class: 'page docs'},
                 h('div', {class: 'docs__nav'},
@@ -328,7 +328,7 @@ class NotFound extends Component {
             h(Header, {}),
             h('div', {class: 'page centered'},
                 h('h1', {}, 'Page not found.'),
-                h(Link, {href: '/'}, 'Go Back Home')
+                h('a', {href: '/'}, 'Go Back Home')
             )
         );
     }
