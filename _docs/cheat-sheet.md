@@ -39,6 +39,13 @@ letter:
 - D
 ```
 
+You can also use [recursion](/docs/recursion) so a block includes itself:
+
+```pcg
+root:
+- A {{ root }}
+```
+
 ## Ranges
 
 You can pick from a numeric range using `..`:
@@ -81,6 +88,8 @@ Supported filters are `upper`, `lower`, `title` and `sentence`.
 
 ## SVG Graphics
 
+[Documentation](/docs/generating-graphics) | [SVG Reference](https://developer.mozilla.org/en-US/docs/Web/SVG)
+
 To create graphics use a `<svg>` tag containing width and height attributes:
 
 ```pcg
@@ -101,7 +110,7 @@ shape:
 - <circle cx=0 cy=0 r={{ 0..50 }} fill=none stroke=black />
 ```
 
-A background is a rectangle with width / height set to 100%:
+A **background** is a rectangle with width / height set to 100%:
 
 ```pcg
 root:

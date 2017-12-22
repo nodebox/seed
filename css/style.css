@@ -431,12 +431,15 @@ a {
     color: #666;
     border-radius: 3px;
     font-size: 12px;
+    overflow-x: auto;
 }
 
 .docs__body .code-wrap pre {
     position: relative;
     flex: 1;
     margin-bottom: 0;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 
 .docs__body .code-wrap pre::before {
@@ -458,6 +461,7 @@ a {
     border-left: 1px solid #ddd;
     font-family: "SF Mono", Menlo, monospace;
     font-size: 12px;
+    overflow-x: auto;
 }
 
 .docs__body .code-wrap .code-result::before {

@@ -1,9 +1,9 @@
 # Documentation
 
-Welcome to PCG! We try our best to make this system as user-friendly as possible. Here are some links you may want.
+Welcome to PCG! We've created a system to easily generate procedural content using web technologies.
 
 * [Read the Getting Started Guide](/docs/getting-started)
-* [Reference the Cheat Sheet](/docs/cheat-sheet)
+* [Read the Cheat Sheet](/docs/cheat-sheet)
 
 ---
 
