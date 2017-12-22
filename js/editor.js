@@ -65,7 +65,7 @@ const GALLERY = [
     '-L0kzMILE3LZTE_1gQg_',
     '-L0kp-8ncfHFX_pBOr6l',
     '-L0jGl9IhooqRuTF9wxS',
-    '-L0jJStwcqMNLIN7H_3w',
+    '-L0z0WC6Ff9FHpsDA1mc',
     '-L0tkJ8uwpSeFdB0_2J4',
     '-L0kGLkGKVe9Iuid9jzC',
     '-L0ktGjsgAqsUmbsNk81',
