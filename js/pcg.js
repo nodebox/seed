@@ -179,6 +179,7 @@ function parsePhraseBook(s) {
     const lines = s.split('\n');
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+        const trimmedLine = line.trim();
         if (line.startsWith('  ')) {
             // Phrases continue with two spaces.
             // This comes first because some of the next rules trim the spaces, which we don't want here.
@@ -192,11 +193,11 @@ function parsePhraseBook(s) {
             const lastPhrase = currentPhrase.values[lastIndex];
             console.assert(typeof lastPhrase === 'string');
             currentPhrase.values[lastIndex] = lastPhrase + line.substring(2);
-        } else if (line.trim()[0] === '#') {
+        } else if (trimmedLine[0] === '#') {
             // Ignore comments
             currentPhrase = undefined;
             continue;
-        } else if (line.trim().length === 0) {
+        } else if (trimmedLine.length === 0) {
             // Ignore empty lines
             currentPhrase = undefined;
             continue;
@@ -206,9 +207,9 @@ function parsePhraseBook(s) {
                 throw new Error(`Line ${ i + 1 }: line without a key.`);
             }
             currentPhrase.values.push(line.substring(2));
-        } else if (line.endsWith(':')) {
+        } else if (trimmedLine.endsWith(':')) {
             // Keys end with ":"
-            currentPhrase = { key: line.substring(0, line.length - 1), values: [] };
+            currentPhrase = { key: trimmedLine.substring(0, trimmedLine.length - 1), values: [] };
             phrases.push(currentPhrase);
         } else {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
