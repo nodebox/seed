@@ -345,18 +345,23 @@ a {
 }
 
 .docs__nav li {
-    padding: 10px 15px;
-}
-
-.docs__nav li.docs__header {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 15px;
-    margin-bottom: 15px;
 }
 
 .docs__nav li a {
+    padding: 10px 15px;
     display: block;
     border-bottom: none !important;
+}
+
+.docs__nav li a.docs__header {
+    border-bottom: 1px solid #ddd !important;
+    padding-bottom: 15px;
+    margin-bottom: 10px;
+}
+
+.docs__nav li a.active {
+    font-weight: bold;
+    color: #000;
 }
 
 .docs__body {
@@ -370,6 +375,7 @@ a {
     font-weight: 200;
     font-size: 1.2rem;
     line-height: 1.5;
+    margin-bottom: 0.5rem;
 }
 
 .docs__body p, .docs__body li {
@@ -378,6 +384,17 @@ a {
 
 .docs__body ul {
     margin-bottom: 1rem;
+}
+
+.docs__body li {
+    margin-bottom: 0.5rem;
+}
+
+.docs__body hr {
+    border: 0;
+    border-bottom: 2px solid #ddd;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
 .docs__body img {
@@ -390,8 +407,21 @@ a {
     border-bottom-color: rgba(0, 0, 0, 0.2);
 }
 
+.docs__body a:hover {
+    border-bottom-color: rgba(0, 0, 0, 0.9);
+}
+
+
 .docs__body a.noline {
     border-bottom: none !important;
+}
+
+.docs__body .code-wrap {
+    display: flex;
+    width: 100%;
+    background: white;
+    border-radius: 3px;
+    margin-bottom: 1rem;
 }
 
 .docs__body pre {
@@ -403,8 +433,49 @@ a {
     font-size: 12px;
 }
 
+.docs__body .code-wrap pre {
+    position: relative;
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.docs__body .code-wrap pre::before {
+    content: 'sketch';
+    position: absolute;
+    right: 7px;
+    top: 5px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    color: #ddd;
+    text-transform: uppercase;
+}
+
+.docs__body .code-wrap .code-result {
+    position: relative;
+    width: 250px;
+    white-space: pre;
+    padding: 1.05rem 10px;
+    border-left: 1px solid #ddd;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px;
+}
+
+.docs__body .code-wrap .code-result::before {
+    content: 'result';
+    position: absolute;
+    right: 7px;
+    top: 5px;
+    font-size: 11px;
+    color: #ddd;
+    text-transform: uppercase;
+}
+
 .docs__body code {
     font-family: "SF Mono", Menlo, monospace;
+    background: white;
+    display: inline-block;
+    border-radius: 3px;
+    padding: 0 0.2rem;
 }
 
 .docs__body blockquote {

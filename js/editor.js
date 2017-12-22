@@ -15,6 +15,33 @@ function debounce(func, wait) {
     };
 }
 
+function escape(html, encode) {
+  return html
+    .replace(!encode ? /&(?!#?\w+;)/g : /&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const gMarkedRenderer = new marked.Renderer();
+gMarkedRenderer.code = function(code, lang) {
+    let html = '<pre><code>' + escape(code) + '</code></pre>';
+    if (lang === 'pcg') {
+        let result;
+        try {
+            console.log('rendering', code);
+            const phraseBook = parsePhraseBook(code);
+            result = generateString(phraseBook);
+        } catch (e) {
+            console.error(e);
+            result = e.stack;
+        }
+        html = `<div class="code-wrap">${ html }<div class="code-result">${ result }</div></div>`;
+    }
+    return html;
+}
+
 const INITIAL_TEXT = `root:
 - Dear {{ giver }}, thank you for the {{ object }}.
 - Hey {{ giver }}, thanks for the {{ object }}!
@@ -79,7 +106,7 @@ class Home extends Component {
         const thumbs = GALLERY.map(id => this.renderThumb(id));
         return h('div', {class: 'app'},
             h(Header, {},
-                h('a', {class: 'button', href: '/sketch'}, 'Create')
+                h('a', {class: 'button', href: '/sketch'}, 'New Sketch')
             ),
             h('div', {class: 'page'},
                 h('section', { class: 'intro' },
@@ -290,18 +317,33 @@ class Docs extends Component {
         super(props);
         this.state = { page: undefined, html: 'Loading...' };
     }
-    render() {
+
+    render(props) {
+        const PAGES = [
+            { id: 'index', title: 'Documentation' },
+            { id: 'getting-started', title: 'Getting Started' },
+            { id: 'graphics', title: 'Generating Graphics' },
+            { id: 'recursion', title: 'Recursion' },
+            { id: 'cheat-sheet', title: 'Cheat Sheet' },
+        ]
+        const items = [];
+        for (const page of PAGES) {
+            let link;
+            if (page.id === 'index') {
+                link = h(Link, { class: 'docs__header' + (props.page === 'index' ? ' active' : ''), href: '/docs' }, page.title);
+            } else {
+                link = h(Link, { class: props.page === page.id ? 'active' : '', href: `/docs/${ page.id }` }, page.title);
+            }
+            items.push(h('li', {}, link));
+        }
         return h('div', {class: 'app'},
             h(Header, {},
-                h('a', {class: 'button', href: '/sketch'}, 'Create')
+                h('a', {class: 'button', href: '/sketch'}, 'New Sketch')
             ),
             h('div', {class: 'page docs'},
                 h('div', {class: 'docs__nav'},
                     h('ul', {},
-                        h('li', { class: 'docs__header' }, 'Documentation'),
-                        h('li', {}, h(Link, { href: '/docs' }, 'Getting Started')),
-                        h('li', {}, h(Link, { href: '/docs/graphics' }, 'Generating Graphics')),
-                        h('li', {}, h(Link, { href: '/docs/recursion' }, 'Recursion')),
+                        items
                     )
                 ),
                 h('div', {class: 'docs__body', dangerouslySetInnerHTML: { __html: this.state.html}})
@@ -315,7 +357,7 @@ class Docs extends Component {
         fetch(`/_docs/${page}.md`)
             .then(res => res.text())
             .then(text => {
-                const html = marked(text);
+                const html = marked(text, { renderer: gMarkedRenderer });
                 this.setState({ page: this.props.page, html });
             });
     }
