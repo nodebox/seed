@@ -178,25 +178,40 @@ function parsePhraseBook(s) {
     let currentPhrase;
     const lines = s.split('\n');
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line[0] === '#') {
+        const line = lines[i];
+        if (line.startsWith('  ')) {
+            // Phrases continue with two spaces.
+            // This comes first because some of the next rules trim the spaces, which we don't want here.
+            if (!currentPhrase) {
+                throw new Error(`Line ${ i + 1 }: continuation line without a starting block.`);
+            }
+            const lastIndex = currentPhrase.values.length - 1;
+            if (lastIndex < 0) {
+                throw new Error(`Line ${ i + 1 }: continuation line without a previous line.`);
+            }
+            const lastPhrase = currentPhrase.values[lastIndex];
+            console.assert(typeof lastPhrase === 'string');
+            currentPhrase.values[lastIndex] = lastPhrase + line.substring(2);
+        } else if (line.trim()[0] === '#') {
             // Ignore comments
+            currentPhrase = undefined;
             continue;
-        } else if (line.length === 0) {
+        } else if (line.trim().length === 0) {
             // Ignore empty lines
-        } else if (line[0] === '-') {
+            currentPhrase = undefined;
+            continue;
+        } else if (line.startsWith('- ')) {
             // Phrases are prefixed with '-'.
             if (!currentPhrase) {
-                throw new Error(`${i}: line without a key.`);
-            } else {
-                currentPhrase.values.push(line.substring(2).trim());
+                throw new Error(`Line ${ i + 1 }: line without a key.`);
             }
+            currentPhrase.values.push(line.substring(2));
         } else if (line.endsWith(':')) {
             // Keys end with ":"
             currentPhrase = { key: line.substring(0, line.length - 1), values: [] };
             phrases.push(currentPhrase);
         } else {
-            throw new Error(`${i}: do not know what to do with line "${line}".`);
+            throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
         }
     }
     const phraseBook = {};

@@ -11,6 +11,16 @@ root:
 - Mark
 ```
 
+An **option** starts with `"-  "` and can continue over multiple lines as long as it has 2 spaces in front of it:
+
+```pcg
+root:
+- This is a very long piece of text.
+  Note that no extra spaces are inserted between.
+   We need to add them ourselves
+   by appending another space to the line.
+```
+
 A **token** will be replaced with a random choice from the block it refers to:
 
 ```pcg
@@ -104,7 +114,9 @@ To start in the middle of the composition, add a group with a transform to half 
 
 ```pcg
 root:
-- <svg width=100 height=100><g transform="translate(50 50)">{{ shape * 25 }}</g></svg>
+- <svg width=100 height=100>
+    <g transform="translate(50 50)">{{ shape * 25 }}</g>
+  </svg>
 
 shape:
 - <circle cx=0 cy=0 r={{ 0..50 }} fill=none stroke=black />

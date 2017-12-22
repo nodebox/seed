@@ -431,7 +431,6 @@ a {
     color: #666;
     border-radius: 3px;
     font-size: 12px;
-    overflow-x: auto;
 }
 
 .docs__body .code-wrap pre {
@@ -456,12 +455,10 @@ a {
 .docs__body .code-wrap .code-result {
     position: relative;
     width: 250px;
-    white-space: pre;
-    padding: 1.05rem 10px;
+    padding: 1.4rem 10px;
     border-left: 1px solid #ddd;
     font-family: "SF Mono", Menlo, monospace;
     font-size: 12px;
-    overflow-x: auto;
 }
 
 .docs__body .code-wrap .code-result::before {
