@@ -86,7 +86,7 @@ const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
 const AMOUNT_RE = /^(.*?)\s*\*\s*(\d+)$/;
 
 const MAX_LEVEL = 50;
-const TIMEOUT_MILLIS = 50;
+const TIMEOUT_MILLIS = 1000;
 
 function evalPhrase(phraseBook, phrase, level=0, startTime=0) {
     if (level > MAX_LEVEL) return '';
