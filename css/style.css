@@ -204,12 +204,19 @@ a {
 .editor {
     flex: 1;
     display: flex;
+    flex-direction: row;
+}
+
+.editor__source-wrap, .editor__viewer-wrap {
+    flex: 1;
+    display: flex;
     flex-direction: column;
 }
 
 
 .editor__toolbar {
     height: 40px;
+    min-height: 40px;
     background: #666;
     display: flex;
     align-items: center;
@@ -224,6 +231,15 @@ a {
     padding: 5px 8px;
     background: #6a6;
     font-size: 0.8rem;
+}
+
+.editor__toolbar-left {
+    flex: 1;
+}
+
+.editor__toolbar-center {
+    flex: 1;
+    text-align: left;
 }
 
 .editor__toolbar-right {

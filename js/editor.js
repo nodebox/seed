@@ -141,7 +141,7 @@ class Home extends Component {
 class Editor extends Component {
     constructor(props) {
         super(props);
-        let state = { debug: true, debugOutput: '', result: '', seed: randomTextSeed() };
+        let state = { debug: true, debugOutput: '', result: '', seed: randomTextSeed(), playing: false, frame: 0 };
         if (!props.id) {
             state.source = INITIAL_TEXT;
         } else {
@@ -153,10 +153,9 @@ class Editor extends Component {
 
     generate() {
         try {
-            const phraseBook = parsePhraseBook(this.state.source);
-            const result = generateString(phraseBook, 'root', this.state.seed);
+            this.phraseBook = parsePhraseBook(this.state.source);
+            const result = generateString(this.phraseBook, 'root', this.state.seed);
             this.setState({ result: result, debugOutput: '' });
-            //this.setState({ debugOutput: JSON.stringify(phraseBook, null, 4) });
         } catch (e) {
             this.setState({ debugOutput: e.message });
         }
@@ -167,6 +166,9 @@ class Editor extends Component {
         if (!this.props.id) {
             if (this.props.onSourceChanged) {
                 this.props.onSourceChanged(INITIAL_TEXT, true);
+            }
+            if (this.props.onSeedChanged) {
+                this.props.onSeedChanged(this.state.seed);
             }
             this.generate();
         } else {
@@ -224,20 +226,51 @@ class Editor extends Component {
         this.onSetSeed(seed);
     }
 
+    onTogglePlay() {
+        if (!this.state.playing) {
+            this.setState({playing: true, frame: 0});
+            this.startTime = Date.now();
+            requestAnimationFrame(this.onDoFrame.bind(this))
+        } else {
+            this.setState({playing: false, frame: 0});
+        }
+    }
+
+    onDoFrame() {
+        if (this.state.playing) {
+            try {
+                const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
+                const durationSeconds = 2.0;
+                const t = (elapsedSeconds / durationSeconds) % 1.0;
+                const result = generateString(this.phraseBook, 'root', this.state.seed, t);
+                this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
+                window.requestAnimationFrame(this.onDoFrame.bind(this));
+            } catch (e) {
+                this.setState({ frame: 0, playing: false, debugOutput: e.message });
+            }
+        }
+    }
+
     render(props, state) {
         const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
         const source = state.loading ? 'Loading...' : state.source;
-        const headerRight = props.headerRight ? h('span', { className: 'editor__toolbar-right' }, props.headerRight) : null;
         return h('div', { className: 'editor' },
-            h('div', { className: 'editor__toolbar' },
-                h('button', { class: 'button', onClick: this.onGenerate.bind(this) }, 'Generate'),
-                h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) }),
-                headerRight
-            ),
-            h('div', { className: 'editor__panels'},
+            h('div', { className: 'editor__source-wrap'},
+                h('div', { className: 'editor__toolbar' },
+                    h('button', { class: 'button', onClick: this.onGenerate.bind(this) }, 'Generate'),
+                    h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
+                ),
                 h('div', { className: 'editor__source' },
                     h('textarea', { className: 'editor__area', value: source, onInput: this.onInput.bind(this), readonly: state.loading }),
                         debugView
+                ),
+            ),
+            h('div', { className: 'editor__viewer-wrap'},
+                h('span', { class: 'editor__toolbar' },
+                    h('button', { class: 'button', onClick: this.onTogglePlay.bind(this) }, state.playing ? 'Stop' : 'Play'),
+                    h('span', { className: 'editor__toolbar-right' },
+                        props.headerRight
+                    )
                 ),
                 h('div', { className: 'editor__viewer' },
                     h('div', { className: 'editor__result', dangerouslySetInnerHTML: { __html: this.state.result } })
@@ -275,6 +308,8 @@ class Sketch extends Component {
     }
 
     onSave() {
+        console.assert(this.state.source !== undefined);
+        console.assert(this.state.seed !== undefined);
         if (this.state.saving) return;
         this.setState({ saving: true });
         let sketch = {};
