@@ -311,10 +311,6 @@ a {
     padding: 10px;
 }
 
-.editor__viewer {
-    flex: 1;
-}
-
 .editor__area {
     width: 100%;
     height: 100%;
@@ -329,7 +325,7 @@ a {
 
 .editor__viewer {
     border-left: 2px solid #ddd;
-    width: 50%;
+    flex: 1;
 }
 
 .editor__result {
