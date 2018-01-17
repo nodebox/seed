@@ -1,30 +1,30 @@
 # Getting Started
 
-PCG generates new, random content based on a set of *rules* you define. These rules always generate text. But because we're on the web this text can also be HTML code or SVG graphics. PCG uses a system called a [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
+Seed generates new, random content based on a set of _rules_ you define. These rules always generate text. But because we're on the web this text can also be HTML code or SVG graphics. Seed uses a system called a [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar).
 
 Here is a simple example that generates "thank you" notes (it is also displayed when [creating a new sketch](/sketch)):
 
 <iframe src="/embed/-L0tnl8CMxUtqA9_cIKd"></iframe>
 
-You can generate new variations using the "Generate" button (try it now!). Each variation has a unique *seed*, which consists of three letters. You can browse through the different variations using the arrows next to the seed value in the toolbar.
+You can generate new variations using the "Generate" button (try it now!). Each variation has a unique _seed_, which consists of three letters. You can browse through the different variations using the arrows next to the seed value in the toolbar.
 
-Saving in PCG is easy: each time you save a sketch it generates a new, unique URL that you can share. Other people can make variations and save their versions. This makes it easy to experiment. We're adding user logins soon so you can save your favorite sketches to your account.
+Saving in Seed is easy: each time you save a sketch it generates a new, unique URL that you can share. Other people can make variations and save their versions. This makes it easy to experiment. We're adding user logins soon so you can save your favorite sketches to your account.
 
 ## The Structure of a Sketch
 
-A sketch in PCG consists of a number of "blocks". Each block starts with a name ending in a ":", and a list of options. If PCG encounters a `{{ token }}` it will look for a block with this name, pick an option from the list and replace the token with the selected option.
+A sketch in Seed consists of a number of "blocks". Each block starts with a name ending in a ":", and a list of options. If Seed encounters a `{{ token }}` it will look for a block with this name, pick an option from the list and replace the token with the selected option.
 
-The `root:` element is special. PCG will always look for a `root:` element when generating new content. This is the *start* of your document. Beneath this line there are two options that start with a `-`. When generating content, PCG will *choose one of these options*. The more options you give, the more freedom the system has to choose between.
+The `root:` element is special. Seed will always look for a `root:` element when generating new content. This is the _start_ of your document. Beneath this line there are two options that start with a `-`. When generating content, Seed will _choose one of these options_. The more options you give, the more freedom the system has to choose between.
 
-> Create a list of options and PCG will choose one of them at random.
+> Create a list of options and Seed will choose one of them at random.
 
-Each time PCG encounters this list it can make a different choice. The choice is random, but the variation is based on the *random seed*. We'll talk about random seeds later.
+Each time Seed encounters this list it can make a different choice. The choice is random, but the variation is based on the _random seed_. We'll talk about random seeds later.
 
-If this is all the system could do, we would be limited. We need a way to replace *parts* of the text with other options. That's where *tokens* come in.
+If this is all the system could do, we would be limited. We need a way to replace _parts_ of the text with other options. That's where _tokens_ come in.
 
-If we look at the first line below `root:` we see that it has these special `{{ }}` brackets in the middle of the sentence. We call these **tokens**: special markers that signal to PCG that we want to replace them with random content. Which content depends on what's between the tokens: the *identifier*. In this case the identifier is a name. We're going to lookup this name, choose from one of its options and place the result back into the text.
+If we look at the first line below `root:` we see that it has these special `{{ }}` brackets in the middle of the sentence. We call these **tokens**: special markers that signal to Seed that we want to replace them with random content. Which content depends on what's between the tokens: the _identifier_. In this case the identifier is a name. We're going to lookup this name, choose from one of its options and place the result back into the text.
 
-> Use `{{ tokens }}` if you want PCG to fill in a random option.
+> Use `{{ tokens }}` if you want Seed to fill in a random option.
 
 ## An Example
 
@@ -68,7 +68,7 @@ object:
 - dishwasher
 ```
 
-Here we pick option 2, the golden retriever. Note that this block could *also* have tokens! For example we could imagine that we want the material to be random, so we could say we don't just have a golden retriever, but a `{{ material }} retriever`. `material` is an identifier that points to a new block that has `golden`, `silver`, `bronze`, and so on.
+Here we pick option 2, the golden retriever. Note that this block could _also_ have tokens! For example we could imagine that we want the material to be random, so we could say we don't just have a golden retriever, but a `{{ material }} retriever`. `material` is an identifier that points to a new block that has `golden`, `silver`, `bronze`, and so on.
 
 We now have everything to assemble the final sentence:
 
@@ -82,7 +82,7 @@ This is enough to do simple text generation. By making our replacements more com
 
 <iframe src="/embed/-L0jT5zaERgBPaf3P6LP"></iframe>
 
-Note that this uses the exact same system as in this simple example. We just have *much more* options to choose from, and each of those contain choices as well, and so on.
+Note that this uses the exact same system as in this simple example. We just have _much more_ options to choose from, and each of those contain choices as well, and so on.
 
 It's interesting to see how this is built up. Because we want the text to have multiple sentences, we render a number of `{{ sentence }}` tokens in the root:
 

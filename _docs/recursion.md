@@ -5,12 +5,11 @@ In recursion, one part is defined in terms of itself. There are many examples of
 ![The fractal shape of a Romanesco broccoli](/_docs/romanesco.jpg)<br>
 Image by [Jon Sullivan](https://commons.wikimedia.org/wiki/File:Fractal_Broccoli.jpg)
 
-In PCG we can build our own recursive shapes by letting a block refer to itself. This automatically creates multiple copies of the shape. Here's a simple example:
-
+In Seed we can build our own recursive shapes by letting a block refer to itself. This automatically creates multiple copies of the shape. Here's a simple example:
 
 <iframe src="/embed/-L0tODa6VYOxbW1yFq2D"></iframe>
 
-If you look closely you can see that at the end of the `circle:` block we call `circle:`again! So a {{ circle }} expands to a `<circle.../>` tag and a {{ circle }}, which expands to a `<circle.../>` tag and a {{ circle }}, which expands to... you get the idea. This is a recursive process: a system that calls itself. PCG has a mechanism to stop at some point (by default after 50 iterations), otherwise our expansion would never end and the system would crash.
+If you look closely you can see that at the end of the `circle:` block we call `circle:`again! So a {{ circle }} expands to a `<circle.../>` tag and a {{ circle }}, which expands to a `<circle.../>` tag and a {{ circle }}, which expands to... you get the idea. This is a recursive process: a system that calls itself. Seed has a mechanism to stop at some point (by default after 50 iterations), otherwise our expansion would never end and the system would crash.
 
 Although this example certainly works to get many circles on screen, we would be better of to just use the multiply operator (`*`) as we've seen in the [generating graphics](/docs/graphics) chapter. Things get more interesting if every recursive shape changes a little bit: becomes bigger or smaller, rotates, etc. Like this:
 

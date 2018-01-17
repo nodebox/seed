@@ -1,4 +1,4 @@
-# pcg.js
+# Seed
 
 Procedural Content Generator
 

@@ -1,6 +1,6 @@
 # Documentation
 
-Welcome to PCG! We've created a system to easily generate procedural content using web technologies.
+Welcome to the Seed procedural content generator! We've created a system to easily generate procedural content using web technologies.
 
 * [Read the Getting Started Guide](/docs/getting-started)
 * [Learn how to create graphics](/docs/graphics)

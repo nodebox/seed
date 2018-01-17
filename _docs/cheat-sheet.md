@@ -2,18 +2,18 @@
 
 ## Basic Elements
 
-A **block** contains a set of options which PCG can pick from:
+A **block** contains a set of options which Seed can pick from:
 
-```pcg
+```seed
 root:
 - Dave
 - Edna
 - Mark
 ```
 
-An **option** starts with `"-  "` and can continue over multiple lines as long as it has 2 spaces in front of it:
+An **option** starts with `"- "` and can continue over multiple lines as long as it has 2 spaces in front of it:
 
-```pcg
+```seed
 root:
 - This is a very long piece of text.
   Note that no extra spaces are inserted between.
@@ -23,7 +23,7 @@ root:
 
 A **token** will be replaced with a random choice from the block it refers to:
 
-```pcg
+```seed
 root:
 - Welcome to {{ place }}!
 
@@ -38,7 +38,7 @@ place:
 
 Tokens can be repeated by adding a multiply (`*`) symbol:
 
-```pcg
+```seed
 root:
 - {{ letter * 10 }}
 
@@ -51,7 +51,7 @@ letter:
 
 You can also use [recursion](/docs/recursion) so a block includes itself:
 
-```pcg
+```seed
 root:
 - A {{ root }}
 ```
@@ -60,21 +60,21 @@ root:
 
 You can pick from a numeric range using `..`:
 
-```pcg
+```seed
 root:
 - You are {{ 5..95 }} years old.
 ```
 
 You can also use this for character ranges:
 
-```pcg
+```seed
 root:
 - {{ A..Z }}
 ```
 
 Of course you can combine that with repetitions:
 
-```pcg
+```seed
 root:
 - {{ A..Z * 10 }}
 ```
@@ -83,7 +83,7 @@ root:
 
 To change the result of a token add a filter using the `|`. A filter can be used to transform the text:
 
-```pcg
+```seed
 root:
 - {{ stop_word|sentence }} it begins {{ stop_word }} it ends.
 
@@ -95,14 +95,13 @@ stop_word:
 
 Supported filters are `upper`, `lower`, `title` and `sentence`.
 
-
 ## SVG Graphics
 
 [Documentation](/docs/generating-graphics) | [SVG Reference](https://developer.mozilla.org/en-US/docs/Web/SVG)
 
 To create graphics use a `<svg>` tag containing width and height attributes:
 
-```pcg
+```seed
 root:
 - <svg width=100 height=100>{{ shape * 20 }}</svg>
 
@@ -112,7 +111,7 @@ shape:
 
 To start in the middle of the composition, add a group with a transform to half the width/height:
 
-```pcg
+```seed
 root:
 - <svg width=100 height=100>
     <g transform="translate(50 50)">{{ shape * 25 }}</g>
@@ -124,7 +123,7 @@ shape:
 
 A **background** is a rectangle with width / height set to 100%:
 
-```pcg
+```seed
 root:
 - <svg width=100 height=100>{{ background }}{{ shape }}</svg>
 
@@ -134,4 +133,3 @@ background:
 shape:
 - <polygon points="10,80 50,10 90,80" />
 ```
-
