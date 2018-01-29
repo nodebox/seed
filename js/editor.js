@@ -155,7 +155,7 @@ class Editor extends Component {
     generate() {
         try {
             this.phraseBook = parsePhraseBook(this.state.source);
-            const result = generateString(this.phraseBook, 'root', this.state.seed);
+            const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
         } catch (e) {
             this.setState({ debugOutput: e.message });
@@ -243,7 +243,7 @@ class Editor extends Component {
                 const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
                 const durationSeconds = 2.0;
                 const t = (elapsedSeconds / durationSeconds) % 1.0;
-                const result = generateString(this.phraseBook, 'root', this.state.seed, t);
+                const result = generateString(this.phraseBook, 'root', {}, this.state.seed, t);
                 this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
                 window.requestAnimationFrame(this.onDoFrame.bind(this));
             } catch (e) {

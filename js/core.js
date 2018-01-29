@@ -99,7 +99,7 @@ function lerp(min, max, t) {
     return min + t * (max - min);
 }
 
-function evalPhrase(phraseBook, phrase, t=0.0, level=0, startTime=0) {
+function evalPhrase(phraseBook, phrase, memory, t=0.0, level=0, startTime=0) {
     if (level > MAX_LEVEL) return '';
     if (startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
         throw new Error('Evaluation timed out. Do you have a recursive function?');
@@ -109,28 +109,40 @@ function evalPhrase(phraseBook, phrase, t=0.0, level=0, startTime=0) {
         if (token.type === TOKEN_TEXT) {
             s += token.text;
         } else {
+            let dvar;
+            if (token.variable) {
+                dvar = token.text + ':' + token.variable;
+            }
             for (let i = 0; i < token.amount; i++) {
                 let text;
-                const m1 = NUMBER_RANGE_RE.exec(token.text)
-                const m2 = CHAR_RANGE_RE.exec(token.text)
-                const m3 = ANIMATION_RANGE_RE.exec(token.text)
-                if (m1) {
-                    const min = parseFloat(m1[1]);
-                    const max = parseFloat(m1[3]);
-                    text = Math.floor(rand(min, max));
-                } else if (m2) {
-                    const min = m2[1].charCodeAt(0);
-                    const max = m2[2].charCodeAt(0);
-                    const charCode = Math.floor(rand(min, max));
-                    text = String.fromCharCode(charCode);
-                } else if (m3) {
-                    const min = parseFloat(m3[1]);
-                    const max = parseFloat(m3[3]);
-                    text = lerp(min, max, t);
-                } else {
-                    const phrase = lookupPhrase(phraseBook, token.text);
-                    text = evalPhrase(phraseBook, phrase, t, level + 1, startTime);
+                if (dvar && memory[dvar]) {
+                    text = memory[dvar];
                     text = applyFilters(text, token.filters);
+                } else {
+                    const m1 = NUMBER_RANGE_RE.exec(token.text)
+                    const m2 = CHAR_RANGE_RE.exec(token.text)
+                    const m3 = ANIMATION_RANGE_RE.exec(token.text)
+                    if (m1) {
+                        const min = parseFloat(m1[1]);
+                        const max = parseFloat(m1[3]);
+                        text = Math.floor(rand(min, max));
+                    } else if (m2) {
+                        const min = m2[1].charCodeAt(0);
+                        const max = m2[2].charCodeAt(0);
+                        const charCode = Math.floor(rand(min, max));
+                        text = String.fromCharCode(charCode);
+                    } else if (m3) {
+                        const min = parseFloat(m3[1]);
+                        const max = parseFloat(m3[3]);
+                        text = lerp(min, max, t);
+                    } else {
+                        const phrase = lookupPhrase(phraseBook, token.text);
+                        text = evalPhrase(phraseBook, phrase, memory, t, level + 1, startTime);
+                        if (dvar) {
+                            memory[dvar] = text;
+                        }
+                        text = applyFilters(text, token.filters);
+                    }
                 }
                 s += text;
             }
@@ -151,7 +163,12 @@ class Token {
                 amount = parseInt(m[2]);
             }
             const textAndFilters = textWithoutTags.split('|');
-            this.text = textAndFilters[0];
+            textWithoutTags = textAndFilters[0];
+            const textAndVar = textWithoutTags.split(':');
+            this.text = textAndVar[0];
+            if (textAndVar[1]) {
+                this.variable = textAndVar[1];
+            }
             this.amount = amount;
             this.filters = textAndFilters.slice(1);
         } else {
@@ -237,8 +254,8 @@ function parsePhraseBook(s) {
     return phraseBook;
 }
 
-function generateString(phraseBook, rootKey = 'root', seed = 1234, t = 0.0) {
+function generateString(phraseBook, rootKey = 'root', memory = {}, seed = 1234, t = 0.0) {
     Math.seedrandom(seed);
     const startTime = Date.now();
-    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey), t, 0, startTime);
+    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey), memory, t, 0, startTime);
 }
