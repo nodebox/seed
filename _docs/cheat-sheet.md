@@ -79,6 +79,17 @@ root:
 - {{ A..Z * 10 }}
 ```
 
+## Animation
+
+You can animate between two values using `-`:
+
+```seed
+root:
+- {{ 100-300 }}
+```
+
+The value will animate back and forward between the two values over a period of 2 seconds.
+
 ## Filters
 
 To change the result of a token add a filter using the `|`. A filter can be used to transform the text:

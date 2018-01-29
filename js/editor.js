@@ -360,6 +360,7 @@ class Docs extends Component {
             { id: 'index', title: 'Documentation' },
             { id: 'getting-started', title: 'Getting Started' },
             { id: 'graphics', title: 'Generating Graphics' },
+            { id: 'animation', title: 'Animation' },
             { id: 'recursion', title: 'Recursion' },
             { id: 'cheat-sheet', title: 'Cheat Sheet' },
         ]
