@@ -85,6 +85,7 @@ const NUMBER_RANGE_RE = /^(-?\d+(\.\d+)?)\.\.(-?\d+(\.\d+)?)$/;
 const ANIMATION_RANGE_RE = /^(-?\d+(\.\d+)?)-(-?\d+(\.\d+)?)$/;
 const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
 const AMOUNT_RE = /^(.*?)\s*\*\s*(\d+)$/;
+const FUNCTION_RE = /^(.*)(\()(.*)(\))$/;
 
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
@@ -118,10 +119,14 @@ function evalPhrase(phraseBook, phrase, memory, t=0.0, level=0, startTime=0) {
                 if (dvar && memory[dvar]) {
                     text = memory[dvar];
                     text = applyFilters(text, token.filters);
+                } else if (memory[token.text]) {
+                    text = memory[token.text];
+                    text = applyFilters(text, token.filters);
                 } else {
-                    const m1 = NUMBER_RANGE_RE.exec(token.text)
-                    const m2 = CHAR_RANGE_RE.exec(token.text)
-                    const m3 = ANIMATION_RANGE_RE.exec(token.text)
+                    const m1 = NUMBER_RANGE_RE.exec(token.text);
+                    const m2 = CHAR_RANGE_RE.exec(token.text);
+                    const m3 = ANIMATION_RANGE_RE.exec(token.text);
+                    const m4 = FUNCTION_RE.exec(token.text);
                     if (m1) {
                         const min = parseFloat(m1[1]);
                         const max = parseFloat(m1[3]);
@@ -135,6 +140,21 @@ function evalPhrase(phraseBook, phrase, memory, t=0.0, level=0, startTime=0) {
                         const min = parseFloat(m3[1]);
                         const max = parseFloat(m3[3]);
                         text = lerp(min, max, t);
+                    } else if (m4) {
+                        const phrase = lookupPhrase(phraseBook, m4[1]);
+                        let newMemory = Object.create(memory);
+                        const parameters = phraseBook[m4[1]].parameters;
+                        const values = m4[3].split(',').map(s => s.trim());
+                        for (let i = 0; i < parameters.length; i += 1) {
+                            let value = evalPhrase(phraseBook, "{{ " + values[i] + " }}", memory, t, level, startTime);
+                            newMemory[parameters[i]] = value;
+                        }
+                        text = evalPhrase(phraseBook, phrase, newMemory, t, level + 1, startTime);
+                        if (token.variable) {
+                            dvar = m4[1] + ':' + token.variable;
+                            memory[dvar] = text;
+                        }
+                        text = applyFilters(text, token.filters);
                     } else {
                         const phrase = lookupPhrase(phraseBook, token.text);
                         text = evalPhrase(phraseBook, phrase, memory, t, level + 1, startTime);
@@ -241,7 +261,14 @@ function parsePhraseBook(s) {
             currentPhrase.values.push(line.substring(2));
         } else if (trimmedLine.endsWith(':')) {
             // Keys end with ":"
-            currentPhrase = { key: trimmedLine.substring(0, trimmedLine.length - 1), values: [] };
+            const key = trimmedLine.substring(0, trimmedLine.length - 1);
+            currentPhrase = { key: key, values: [] };
+            const m = FUNCTION_RE.exec(key);
+            if (m) {
+                currentPhrase.key = m[1];
+                let parametersText = m[3];
+                currentPhrase.parameters = parametersText.split(',').map(x => x.trim());
+            }
             phrases.push(currentPhrase);
         } else {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
@@ -250,6 +277,9 @@ function parsePhraseBook(s) {
     const phraseBook = {};
     for (let phrase of phrases) {
         phraseBook[phrase.key] = phrase.values;
+        if (phrase.parameters) {
+            phraseBook[phrase.key].parameters = phrase.parameters;
+        }
     }
     return phraseBook;
 }
