@@ -176,7 +176,7 @@ class Editor extends Component {
             this.generate();
         } else {
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
-                const sketch = { key: this.props.id, ...snap.val() };
+                const sketch = Object.assign({ key: this.props.id }, snap.val());
                 let newState = { loading: false, source: sketch.source };
                 if (sketch.seed) {
                     newState.seed = sketch.seed;
