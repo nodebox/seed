@@ -117,8 +117,13 @@ a {
     justify-self: flex-end;
 }
 
-.header__nav .button.unsaved {
+.header__nav .save-button {
+    opacity: 0.2;
+}
+
+.header__nav .save-button.unsaved {
     background: #6a6;
+    opacity: 1.0;
 }
 
 /* Page */

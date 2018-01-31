@@ -330,7 +330,7 @@ class Sketch extends Component {
         let saveLabel = state.saving ? 'Saving...' : 'Save';
         return h('div', {class: 'app'},
             h(Header, {},
-                h('button', {class: 'button' + (state.unsaved ? ' unsaved' : ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
+                h('button', {class: 'button save-button' + (state.unsaved ? ' unsaved' : ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
             ),
             h(Editor, {
                 id: props.id,
