@@ -81,6 +81,7 @@ const TOKEN_REF = 'ref';
 
 const TAG_RE = new RegExp(`(${RegExp.escape(VARIABLE_TAG_START)}.*?${RegExp.escape(VARIABLE_TAG_END)})`);
 
+const NUMBER_RE = /^(-?\d+(\.\d+)?)$/;
 const NUMBER_RANGE_RE = /^(-?\d+(\.\d+)?)\.\.(-?\d+(\.\d+)?)$/;
 const ANIMATION_RANGE_RE = /^(-?\d+(\.\d+)?)-(-?\d+(\.\d+)?)$/;
 const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
@@ -123,35 +124,41 @@ function evalPhrase(phraseBook, phrase, memory, t=0.0, level=0, startTime=0) {
                     text = memory[token.text];
                     text = applyFilters(text, token.filters);
                 } else {
-                    const m1 = NUMBER_RANGE_RE.exec(token.text);
-                    const m2 = CHAR_RANGE_RE.exec(token.text);
-                    const m3 = ANIMATION_RANGE_RE.exec(token.text);
-                    const m4 = FUNCTION_RE.exec(token.text);
-                    if (m1) {
-                        const min = parseFloat(m1[1]);
-                        const max = parseFloat(m1[3]);
+                    const mNum = NUMBER_RE.exec(token.text);
+                    const isString = (token.text[0] === '\'' && token.text[token.text.length - 1] === '\'') || (token.text[0] === '"' && token.text[token.text.length - 1] === '"');
+                    const mNumRange = NUMBER_RANGE_RE.exec(token.text);
+                    const mCharRange = CHAR_RANGE_RE.exec(token.text);
+                    const mAnimRange = ANIMATION_RANGE_RE.exec(token.text);
+                    const mFunction = FUNCTION_RE.exec(token.text);
+                    if (mNum) {
+                        text = parseFloat(mNum[1]);
+                    } else if (isString) {
+                        text = token.text.slice(1, token.text.length - 1);
+                    } else if (mNumRange) {
+                        const min = parseFloat(mNumRange[1]);
+                        const max = parseFloat(mNumRange[3]);
                         text = Math.floor(rand(min, max));
-                    } else if (m2) {
-                        const min = m2[1].charCodeAt(0);
-                        const max = m2[2].charCodeAt(0);
+                    } else if (mCharRange) {
+                        const min = mCharRange[1].charCodeAt(0);
+                        const max = mCharRange[2].charCodeAt(0);
                         const charCode = Math.floor(rand(min, max));
                         text = String.fromCharCode(charCode);
-                    } else if (m3) {
-                        const min = parseFloat(m3[1]);
-                        const max = parseFloat(m3[3]);
+                    } else if (mAnimRange) {
+                        const min = parseFloat(mAnimRange[1]);
+                        const max = parseFloat(mAnimRange[3]);
                         text = lerp(min, max, t);
-                    } else if (m4) {
-                        const phrase = lookupPhrase(phraseBook, m4[1]);
+                    } else if (mFunction) {
+                        const phrase = lookupPhrase(phraseBook, mFunction[1]);
                         let newMemory = Object.create(memory);
-                        const parameters = phraseBook[m4[1]].parameters;
-                        const values = m4[3].split(',').map(s => s.trim());
+                        const parameters = phraseBook[mFunction[1]].parameters;
+                        const values = mFunction[3].split(',').map(s => s.trim());
                         for (let i = 0; i < parameters.length; i += 1) {
                             let value = evalPhrase(phraseBook, "{{ " + values[i] + " }}", memory, t, level, startTime);
                             newMemory[parameters[i]] = value;
                         }
                         text = evalPhrase(phraseBook, phrase, newMemory, t, level + 1, startTime);
                         if (token.variable) {
-                            dvar = m4[1] + ':' + token.variable;
+                            dvar = mFunction[1] + ':' + token.variable;
                             memory[dvar] = text;
                         }
                         text = applyFilters(text, token.filters);
