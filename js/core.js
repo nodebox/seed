@@ -163,7 +163,7 @@ function evalPhrase(phraseBook, phrase, memory, t=0.0, level=0, startTime=0) {
                         }
                         text = applyFilters(text, token.filters);
                     } else {
-                        const phrase = lookupPhrase(phraseBook, token.text);
+                        const phrase = lookupPhrase(phraseBook, token.text.trim());
                         text = evalPhrase(phraseBook, phrase, memory, t, level + 1, startTime);
                         if (dvar) {
                             memory[dvar] = text;
@@ -192,12 +192,12 @@ class Token {
             const textAndFilters = textWithoutTags.split('|');
             textWithoutTags = textAndFilters[0];
             const textAndVar = textWithoutTags.split(':');
-            this.text = textAndVar[0];
+            this.text = textAndVar[0].trim();
             if (textAndVar[1]) {
                 this.variable = textAndVar[1];
             }
             this.amount = amount;
-            this.filters = textAndFilters.slice(1);
+            this.filters = textAndFilters.slice(1).map(f => f.trim());
         } else {
             this.text = text;
         }
