@@ -7,6 +7,13 @@ function choice(l) {
     return l[index];
 }
 
+function randomChar(min, max) {
+    min = min.charCodeAt(0);
+    max = max.charCodeAt(0);
+    charCode = Math.round(rand(min, max));
+    return String.fromCharCode(charCode);
+}
+
 function randomTextSeed() {
     let seed = '';
     for (let i = 0; i < 3; i++) {
@@ -75,17 +82,33 @@ String.prototype.toTitleCase = function () {
 
 const VARIABLE_TAG_START = '{{';
 const VARIABLE_TAG_END = '}}';
+const REF_START = 'ref_start';
+const REF_END = 'ref_end';
+const TEXT = 'text';
+const REF = 'ref';
+const EOF = 'eof';
+const KEY = 'key';
+const STRING = 'string';
+const REAL_CONST = 'real_const';
+const INTEGER_CONST = 'integer_const';
+const RANGE = 'range';
+const ANIMATION_RANGE = 'anim_range';
+const FILTER = 'filter';
+const VAR_GLOBAL = 'var_g';
+const PLUS = '+';
+const MINUS = '-';
+const MUL = '*';
+const DIV = '/';
+const LPAREN = '(';
+const RPAREN = ')';
+const LBRACK = '[';
+const RBRACK = ']';
+const COMMA = ',';
 
-const TOKEN_TEXT = 'text';
-const TOKEN_REF = 'ref';
+const DIGITS = '0123456789';
+const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
 
-const TAG_RE = new RegExp(`(${RegExp.escape(VARIABLE_TAG_START)}.*?${RegExp.escape(VARIABLE_TAG_END)})`);
-
-const NUMBER_RE = /^(-?\d+(\.\d+)?)$/;
-const NUMBER_RANGE_RE = /^(-?\d+(\.\d+)?)\.\.(-?\d+(\.\d+)?)$/;
-const ANIMATION_RANGE_RE = /^(-?\d+(\.\d+)?)-(-?\d+(\.\d+)?)$/;
-const CHAR_RANGE_RE = /^(.)\.\.(.)$/;
-const AMOUNT_RE = /^(.*?)\s*\*\s*(\d+)$/;
 const FUNCTION_RE = /^(.*)(\()(.*)(\))$/;
 
 const MAX_LEVEL = 50;
@@ -101,126 +124,737 @@ function lerp(min, max, t) {
     return min + t * (max - min);
 }
 
-function evalPhrase(phraseBook, phrase, memory, t=0.0, level=0, startTime=0) {
+class Token {
+    constructor(type, value) {
+        this.type = type;
+        this.value = value;
+    }
+
+    toString() {
+        return `Token(${this.type}, ${this.value})`;
+    }
+}
+
+class Lexer {
+    constructor(text) {
+        this.text = text;
+        this.pos = 0;
+        this.currentChar = text.length > 0 ? text[this.pos] : null;
+        this.insideRef = false;
+    }
+
+    error(char) {
+        const s = char.length > 1 ? 's' : '';
+        throw new Error(`Invalid character${s} ${char} at position ${this.pos} in phrase '${this.text}'.`);
+    }
+
+    skipWhitespace() {
+        while (this.currentChar === ' ') {
+            this.advance();
+        }
+    }
+
+    advance() {
+        this.pos += 1;
+        if (this.pos > this.text.length - 1) {
+            this.currentChar = null;
+        } else {
+            this.currentChar = this.text[this.pos];
+        }
+    }
+
+    peek() {
+        const peekPos = this.pos + 1;
+        if (peekPos > this.text.length - 1) {
+            return null;
+        } else {
+            return this.text[peekPos];
+        }
+    }
+
+    checkCurrentNextChars(chars) {
+        return this.currentChar === chars[0] && this.peek() === chars[1];
+    }
+
+    checkEscapeChar(char) {
+        return this.currentChar === '\\' && this.peek() === char;
+    }
+
+    _string(terminator) {
+        let result = '';
+        while (this.currentChar !== null) {
+            if (this.checkEscapeChar(terminator)) {
+                result += terminator;
+                this.advance();
+                this.advance();
+            } else if (this.currentChar === terminator) {
+                this.advance();
+                break;
+            } else {
+                result += this.currentChar;
+                this.advance();
+            }
+        }
+        return new Token(STRING, result);
+    }
+
+    _number() {
+        let result = '';
+        while (this.currentChar !== null && DIGITS.indexOf(this.currentChar) !== -1) {
+            result += this.currentChar;
+            this.advance();
+        }
+
+        if (this.currentChar === '.' && this.peek() !== '.') {
+            result += this.currentChar;
+            this.advance();
+
+            while (this.currentChar !== null && DIGITS.indexOf(this.currentChar) !== -1) {
+                result += this.currentChar;
+                this.advance();
+            }
+            return new Token(REAL_CONST, parseFloat(result));
+        } else {
+            return new Token(INTEGER_CONST, parseInt(result));
+        }
+    }
+
+    _key() {
+        let result = '';
+        while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+            if (this.checkCurrentNextChars('..')) {
+                break;
+            }
+            result += this.currentChar;
+            this.advance();
+        }
+        return new Token(KEY, result);
+    }
+
+    _filter() {
+        let result = '';
+        while (this.currentChar !== null && this.currentChar === ' ') {
+            this.skipWhitespace();
+            continue;
+        }
+        while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+            result += this.currentChar;
+            this.advance();
+        }
+        return new Token(FILTER, result);
+    }
+
+    _varg() {
+        let result = '';
+        while (this.currentChar !== null && this.currentChar === ' ') {
+            this.skipWhitespace();
+            continue;
+        }
+        while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+            result += this.currentChar;
+            this.advance();
+        }
+        return new Token(VAR_GLOBAL, result);
+    }
+
+    _animRange() {
+        while (this.currentChar !== null) {
+            this.skipWhitespace();
+            let start, end;
+            if (DIGITS.indexOf(this.currentChar) !== -1) {
+                start = this._number().value;
+            } else {
+                this.error(this.currentChar);
+            }
+            this.skipWhitespace();
+            if (this.currentChar !== ',') {
+                this.error(this.currentChar);
+            } else {
+                this.advance();
+            }
+            this.skipWhitespace();
+            if (DIGITS.indexOf(this.currentChar) !== -1) {
+                end = this._number().value;
+            } else {
+                this.error(this.currentChar);
+            }
+            this.skipWhitespace();
+            if (this.currentChar !== ']') {
+                this.error(this.currentChar);
+            } else {
+                this.advance();
+            }
+            return new Token(ANIMATION_RANGE, {start, end});
+        }
+    }
+
+    _ref() {
+        let result = '';
+        while (this.currentChar !== null) {
+            if (this.currentChar === ' ') {
+                this.skipWhitespace();
+                continue;
+            } else if (this.checkCurrentNextChars(VARIABLE_TAG_START)) {
+                this.error(VARIABLE_TAG_START);
+            } else if (this.checkCurrentNextChars(VARIABLE_TAG_END)) {
+                this.advance();
+                this.advance();
+                this.insideRef = false;
+                return new Token(REF_END, VARIABLE_TAG_END);
+            } else if (this.currentChar === '"') {
+                this.advance();
+                return this._string('"');
+            } else if (this.currentChar === '\'') {
+                this.advance();
+                return this._string("'");
+            } else if (this.checkCurrentNextChars('..')) {
+                this.advance();
+                this.advance();
+                return new Token(RANGE, '..');
+            } else if (this.currentChar === '[') {
+                this.advance();
+                return this._animRange();
+            } else if (this.currentChar === '|') {
+                this.advance();
+                return this._filter();
+            } else if (this.currentChar === ':') {
+                this.advance();
+                return this._varg();
+            } else if (DIGITS.indexOf(this.currentChar) !== -1) {
+                return this._number();
+            } else if (this.currentChar === ',') {
+                this.advance();
+                return new Token(COMMA, ',');
+            } else if (this.currentChar === '+') {
+                this.advance();
+                return new Token(PLUS, '+');
+            } else if (this.currentChar === '-') {
+                this.advance();
+                return new Token(MINUS, '-');
+            } else if (this.currentChar === '*') {
+                this.advance();
+                return new Token(MUL, '*');
+            } else if (this.currentChar === '/') {
+                this.advance();
+                return new Token(DIV, '/');
+            } else if (this.currentChar === '(') {
+                this.advance();
+                return new Token(LPAREN, '(');
+            } else if (this.currentChar === ')') {
+                this.advance();
+                return new Token(RPAREN, ')');
+            } else if (ALPHANUM.indexOf(this.currentChar) !== -1) {
+                return this._key();
+            }
+
+            result += this.currentChar;
+
+            if (result) {
+                this.error(result);
+            }
+        }
+    }
+
+    _text() {
+        if (this.checkCurrentNextChars(VARIABLE_TAG_START)) {
+            this.advance();
+            this.advance();
+            this.insideRef = true;
+            return new Token(REF_START, VARIABLE_TAG_START);
+        }
+        let result = '';
+        while (this.currentChar !== null) {
+            if (this.checkCurrentNextChars(VARIABLE_TAG_END)) {
+                this.error(VARIABLE_TAG_END);
+            } else if (this.checkCurrentNextChars(VARIABLE_TAG_START)) {
+                break;
+            } else if (this.checkEscapeChar('{')) {
+                result += '{';
+                this.advance();
+                this.advance();
+            } else if (this.checkEscapeChar('}')) {
+                result += '}';
+                this.advance();
+                this.advance();
+            } else {
+                result += this.currentChar;
+                this.advance();
+            }
+        }
+        return new Token(TEXT, result);
+    }
+
+    nextToken() {
+        while (this.currentChar !== null) {
+            return this.insideRef ? this._ref() : this._text();
+        }
+        return new Token(EOF, null);
+    }
+}
+
+const NODE_CONCAT = 'Concat';
+const NODE_TEXT = 'Text';
+const NODE_REF = 'Ref';
+const NODE_INTEGER = 'Integer';
+const NODE_REAL = 'Real';
+const NODE_STRING = 'String';
+const NODE_RANGE = 'Range';
+const NODE_KEY = 'Key';
+const NODE_NAMED_KEY = 'NamedKey';
+const NODE_CHAR = 'Char';
+const NODE_FILTER = 'Filter';
+const NODE_ANIMATION_RANGE = 'AnimRange';
+const NODE_UNARY_OP = 'UnaryOp';
+const NODE_BINARY_OP = 'BinaryOp';
+const NODE_NO_OP = 'NoOp';
+
+class Node {
+    constructor(type, data) {
+        this.type = type;
+        if (data) {
+            Object.assign(this, data);
+        }
+    }
+}
+
+class Parser {
+    constructor(lexer) {
+        this.lexer = lexer;
+        this.currentToken = this.lexer.nextToken();
+    }
+
+    error(tokenType) {
+        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+    }
+
+    consume(tokenType) {
+        if (this.currentToken.type === tokenType) {
+            this.currentToken = this.lexer.nextToken();
+        } else {
+            this.error(tokenType);
+        }
+    }
+
+    _filters(node) {
+        while (this.currentToken.type === FILTER) {
+            if (this.currentToken.value === '') {
+                throw new Error(`Naming Error. Encountered a filter token (|) at position ${ this.lexer.pos } without a filter name.`);
+            }
+            node = new Node(NODE_FILTER, { node, name: this.currentToken.value });
+            this.consume(FILTER);
+            node = this._parameters(node);
+        }
+        return node;
+    }
+
+    _range(node) {
+        if (this.currentToken.type === RANGE) {
+            if (node.type === NODE_STRING && node.value.length !== 1) {
+                throw new Error(`RangeError. Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
+            }
+            this.consume(RANGE);
+            let start = node;
+            const filtersOnRange = this.currentToken.type !== LPAREN;
+            node = this.factor();
+            let firstFilter, lastFilter;
+            if (filtersOnRange) {
+                if (node.type === NODE_FILTER) {
+                    firstFilter = node;
+                    lastFilter = node;
+                    while (lastFilter.node.type === NODE_FILTER) {
+                        lastFilter = lastFilter.node;
+                    }
+                    node = lastFilter.node;
+                }
+            }
+            if (node.type === NODE_STRING && node.value.length !== 1) {
+                throw new Error(`RangeError. Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
+            } else if (node.type === NODE_RANGE) {
+                throw new Error(`RangeError. Range followed by another range at position ${ this.lexer.pos - 2 }.`);
+            }
+            if (start.type === NODE_KEY && start.key.length === 1 && !start.parameters) {
+                start = new Node(NODE_CHAR, { value: start.key });
+            }
+            if (node.type === NODE_KEY && node.key.length === 1 && !node.parameters) {
+                node = new Node(NODE_CHAR, { value: node.key });
+            }
+            node = new Node(NODE_RANGE, { start, end: node });
+            if (lastFilter) {
+                lastFilter.node = node;
+                return firstFilter;
+            } else {
+                return node;
+            }
+        } else {
+            return node;
+        }
+    }
+
+    _name(node) {
+        let token = this.currentToken;
+        if (this.currentToken.type === VAR_GLOBAL) {
+            this.consume(VAR_GLOBAL);
+            node = new Node(NODE_NAMED_KEY, { key: node.key, name: token.value });
+        }
+        return node;
+    }
+
+    _parameters(node) {
+        const parameters = [];
+        if (this.currentToken.type === LPAREN) {
+            this.consume(LPAREN);
+            if (this.currentToken.type === RPAREN) {
+                node.parameters = parameters;
+                this.consume(RPAREN);
+                return node;
+            }
+            parameters.push(this.expr());
+            while (this.currentToken.type === COMMA) {
+                this.consume(COMMA);
+                parameters.push(this.expr());
+            }
+            if (this.currentToken.type === RPAREN) {
+                this.consume(RPAREN);
+                node.parameters = parameters;
+                return node;
+            } else {
+                this.error(RPAREN);
+            }
+        }
+        return node;
+    }
+
+    factor() {
+        const token = this.currentToken;
+        let node;
+        if (token.type === PLUS) {
+            this.consume(PLUS);
+            return new Node(NODE_UNARY_OP, { op: token.type, expression: this.factor() });
+        } else if (token.type === MINUS) {
+            this.consume(MINUS);
+            node = new Node(NODE_UNARY_OP, { op: token.type, expression: this.factor() });
+            if (node.expression.type === NODE_RANGE && (node.expression.start.type === NODE_INTEGER || node.expression.start.type === NODE_REAL)) {
+                node = node.expression;
+                node.start = new Node(NODE_UNARY_OP, { op: token.type, expression: node.start });
+            }
+            return node;
+        } else if (token.type === INTEGER_CONST) {
+            this.consume(INTEGER_CONST);
+            node = new Node(NODE_INTEGER, { value: token.value });
+        } else if (token.type === REAL_CONST) {
+            this.consume(REAL_CONST);
+            node = new Node(NODE_REAL, { value: token.value });
+        } else if (token.type === ANIMATION_RANGE) {
+            this.consume(ANIMATION_RANGE);
+            node = new Node(NODE_ANIMATION_RANGE, { start: token.value.start, end: token.value.end });
+        } else if (token.type === STRING) {
+            this.consume(STRING);
+            node = new Node(NODE_STRING, { value: token.value });
+        } else if (token.type === KEY) {
+            this.consume(KEY);
+            node = new Node(NODE_KEY, { key: token.value });
+            node = this._name(node);
+            node = this._parameters(node);
+        } else if (token.type === LPAREN) {
+            this.consume(LPAREN);
+            try {
+                node = this.expr();
+            } catch (e) {
+                throw new Error(`Error. Empty expression at position ${this.lexer.pos}.`);
+            }
+            this.consume(RPAREN);
+        } else {
+            throw new Error(`Invalid syntax: expected a symbol (an integer, float, string, ...) at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+        }
+        node = this._filters(node);
+        node = this._range(node);
+        return node;
+    }
+
+    term() {
+        let node = this.factor();
+        while (this.currentToken.type === MUL || this.currentToken.type === DIV) {
+            let token = this.currentToken;
+            if (token.type === MUL) {
+                this.consume(MUL);
+            } else if (token.type === DIV) {
+                this.consume(DIV);
+            }
+            node = new Node(NODE_BINARY_OP, { left: node, op: token.type, right: this.factor() });
+        }
+        return node;
+    }
+
+    expr() {
+        if (this.currentToken.type === REF_END) {
+            return new Node(NODE_NO_OP);
+        } else if (this.currentToken.type === RPAREN) {
+            throw new Error(`Invalid syntax: Encountered ) symbol at position ${this.lexer.pos} but no ( was seen.`);
+        }
+        let node = this.term();
+        while (this.currentToken.type === PLUS || this.currentToken.type === MINUS) {
+            let token = this.currentToken;
+            if (token.type === PLUS) {
+                this.consume(PLUS);
+            } else if (token.type === MINUS) {
+                this.consume(MINUS);
+            }
+            node = new Node(NODE_BINARY_OP, { left: node, op: token.type, right: this.term() });
+        }
+        return node;
+    }
+
+    ref() {
+        let node = this.expr();
+        if (this.currentToken.type !== REF_END) {
+            throw new Error(`Invalid syntax: expected end of reference at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+        }
+        return new Node(NODE_REF, { node });
+    }
+
+    part() {
+        const token = this.currentToken;
+        let node;
+        if (token.type === TEXT) {
+            this.consume(TEXT);
+            return new Node(NODE_TEXT, { text: token.value });
+        } else if (token.type === REF_START) {
+            this.consume(REF_START);
+            node = this.ref();
+            this.consume(REF_END);
+            return node;
+        }
+    }
+
+    phrase() {
+        let node = this.part();
+        while (this.currentToken.type === TEXT || this.currentToken.type === REF_START) {
+            node = new Node(NODE_CONCAT, { left: node, right: this.part() });
+        }
+        return node;
+    }
+
+    parse() {
+        const node = this.phrase();
+        if (this.currentToken.type !== EOF) {
+            this.error(EOF);
+        }
+        return node;
+    }
+}
+
+class Interpreter {
+    constructor(data) {
+        if (data) {
+            Object.assign(this, data);
+        }
+        this.globalScope = {};
+    }
+
+    visit(node) {
+        const methodName = 'visit' + node.type;
+        if (this[methodName]) {
+            return this[methodName](node);
+        }
+        this.genericVisit(node);
+    }
+
+    genericVisit(node) {
+        throw new Error(`No visit${node.type} method available for node ${node}.`);
+    }
+
+    visitNoOp(node) {
+        return '';
+    }
+
+    visitUnaryOp(node) {
+        const op = node.op;
+        if (op === PLUS) {
+            return +this.visit(node.expression);
+        } else if (op === MINUS) {
+            return -this.visit(node.expression);
+        }
+    }
+
+    visitBinaryOp(node) {
+        const op = node.op;
+        if (op === PLUS) {
+            return this.visit(node.left) + this.visit(node.right);
+        } else if (op === MINUS) {
+            return this.visit(node.left) - this.visit(node.right);
+        } else if (op === MUL) {
+            return this.visit(node.left) * this.visit(node.right);
+        } else if (op === DIV) {
+            return this.visit(node.left) / this.visit(node.right);
+        }
+    }
+
+    visitConcat(node) {
+        return this.visit(node.left) + this.visit(node.right);
+    }
+
+    visitText(node) {
+        return node.text;
+    }
+
+    visitRef(node) {
+        return String(this.visit(node.node));
+    }
+
+    visitString(node) {
+        return node.value;
+    }
+
+    visitInteger(node) {
+        return node.value;
+    }
+
+    visitReal(node) {
+        return node.value;
+    }
+
+    visitChar(node) {
+        return node.value;
+    }
+
+    visitRange(node) {
+        let start, end;
+        let startError, endError;
+        if (node.start.type === NODE_CHAR) {
+            start = node.start.value;
+            if (this.localMemory[start] !== undefined) {
+                start = this.localMemory[start];
+            } else if (this.phraseBook[start] !== undefined) {
+                start = this.visitKey(new Node(NODE_KEY, {key: start}));
+            }
+        } else {
+            start = this.visit(node.start);
+        }
+        if (typeof start === 'string' && String(parseFloat(start)) === start) {
+            start = parseFloat(start);
+        }
+        if (node.end.type === NODE_CHAR) {
+            end = node.end.value;
+            if (this.localMemory[end] !== undefined) {
+                end = this.localMemory[end];
+            } else if (this.phraseBook[end] !== undefined) {
+                end = this.visitKey(new Node(NODE_KEY, {key: end}));
+            }
+        } else {
+            end = this.visit(node.end);
+        }
+        if (typeof end === 'string' && String(parseFloat(end)) === end) {
+            end = parseFloat(end);
+        } else if (typeof start === 'number' && typeof end === 'number') {
+            return Math.floor(rand(start, end));
+        }
+        let min, max, charCode;
+        if (typeof start === 'string' && start.length === 1 && typeof end === 'string' && end.length === 1) {
+            return randomChar(start, end);
+        } else if (typeof start === 'string' && start.length === 1 && typeof end === 'number' && String(end).length === 1) {
+            return randomChar(start, String(end));
+        } else if (typeof start === 'number' && String(start).length === 1 && typeof end === 'string' && end.length === 1) {
+            return randomChar(String(start), end);
+        } else {
+            throw new Error(`Range Error: ${start}..${end}`);
+        }
+    }
+
+    visitKey(node, searchLocal=true) {
+        if (searchLocal && this.localMemory[node.key] !== undefined) {
+            return this.localMemory[node.key];
+        }
+        const phrase = lookupPhrase(this.phraseBook, node.key);
+        const localMemory = {};
+        const parameters = this.phraseBook[node.key].parameters;
+        if (parameters) {
+            for (let i = 0; i < parameters.length; i += 1) {
+                let name = parameters[i];
+                if (node.parameters && node.parameters[i]) {
+                    localMemory[name] = this.visit(node.parameters[i]);
+                } else {
+                    localMemory[name] = '';
+                }
+            }
+        }
+        return evalPhrase(this.phraseBook, phrase, this.globalMemory, localMemory, this.t, this.level + 1, this.startTime);
+    }
+
+    visitNamedKey(node) {
+        const name = `${node.key}:${node.name}`;
+        if (!this.globalMemory[name]) {
+            this.globalMemory[name] = this.visitKey(node);
+        }
+        return this.globalMemory[name];
+    }
+
+    visitRepeatFilter(node) {
+        if (!node.parameters || node.parameters.length === 0) {
+            throw new Error('Repeat filter takes a positive integer argument.');
+        }
+        const times = parseInt(this.visit(node.parameters[0]));
+        if (isNaN(times)) {
+            throw new Error('Repeat filter takes a positive integer argument.');
+        } else if (times <= 0) {
+            throw new Error(`Repeat filter takes one positive integer argument, not ${times}`);
+        }
+        let s = '';
+        for (let i = 0; i < times; i += 1) {
+            s += this.visit(node.node);
+        }
+        return s;
+    }
+
+    visitFilter(node) {
+        const f = node.name;
+        if (f === 'repeat') {
+            return this.visitRepeatFilter(node);
+        }
+        const v = this.visit(node.node);
+        if (f === 'upper') {
+            return String(v).toUpperCase();
+        } else if (f === 'lower') {
+            return String(v).toLowerCase();
+        } else if (f === 'title') {
+            return String(v).toTitleCase();
+        } else if (f === 'sentence') {
+            return String(v).substring(0, 1).toUpperCase() + String(v).substring(1);
+        } else if (f === 'str') {
+            return String(v);
+        } else if (f === 'int') { 
+            let result = parseInt(v);
+            return isNaN(result) ? 0 : result;
+        } else if (f === 'float') {
+            let result = parseFloat(v);
+            return isNaN(result) ? 0 : result;
+        } else {
+            throw new Error(`Unknown filter "${f}".`);
+        }
+    }
+
+    visitAnimRange(node) {
+        return lerp(node.start, node.end, this.t);
+    }
+
+    interpret() {
+        return this.visit(this.phrase.tree);
+    }
+}
+
+function parsePhrase(phrase) {
+    const lexer = new Lexer(phrase);
+    const parser = new Parser(lexer);
+    const tree = parser.parse();
+    return tree;
+}
+
+function evalPhrase(phraseBook, phrase, globalMemory, localMemory, t=0.0, level=0, startTime=0) {
     if (level > MAX_LEVEL) return '';
     if (startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
         throw new Error('Evaluation timed out. Do you have a recursive function?');
     }
-    let s = '';
-    for (let token of tokenize(phrase)) {
-        if (token.type === TOKEN_TEXT) {
-            s += token.text;
-        } else {
-            let dvar;
-            if (token.variable) {
-                dvar = token.text + ':' + token.variable;
-            }
-            for (let i = 0; i < token.amount; i++) {
-                let text;
-                if (dvar && memory[dvar]) {
-                    text = memory[dvar];
-                    text = applyFilters(text, token.filters);
-                } else if (memory[token.text]) {
-                    text = memory[token.text];
-                    text = applyFilters(text, token.filters);
-                } else {
-                    const mNum = NUMBER_RE.exec(token.text);
-                    const isString = (token.text[0] === '\'' && token.text[token.text.length - 1] === '\'') || (token.text[0] === '"' && token.text[token.text.length - 1] === '"');
-                    const mNumRange = NUMBER_RANGE_RE.exec(token.text);
-                    const mCharRange = CHAR_RANGE_RE.exec(token.text);
-                    const mAnimRange = ANIMATION_RANGE_RE.exec(token.text);
-                    const mFunction = FUNCTION_RE.exec(token.text);
-                    if (mNum) {
-                        text = parseFloat(mNum[1]);
-                    } else if (isString) {
-                        text = token.text.slice(1, token.text.length - 1);
-                    } else if (mNumRange) {
-                        const min = parseFloat(mNumRange[1]);
-                        const max = parseFloat(mNumRange[3]);
-                        text = Math.floor(rand(min, max));
-                    } else if (mCharRange) {
-                        const min = mCharRange[1].charCodeAt(0);
-                        const max = mCharRange[2].charCodeAt(0);
-                        const charCode = Math.floor(rand(min, max));
-                        text = String.fromCharCode(charCode);
-                    } else if (mAnimRange) {
-                        const min = parseFloat(mAnimRange[1]);
-                        const max = parseFloat(mAnimRange[3]);
-                        text = lerp(min, max, t);
-                    } else if (mFunction) {
-                        const phrase = lookupPhrase(phraseBook, mFunction[1]);
-                        let newMemory = Object.create(memory);
-                        const parameters = phraseBook[mFunction[1]].parameters;
-                        const values = mFunction[3].split(',').map(s => s.trim());
-                        for (let i = 0; i < parameters.length; i += 1) {
-                            let value = evalPhrase(phraseBook, "{{ " + values[i] + " }}", memory, t, level, startTime);
-                            newMemory[parameters[i]] = value;
-                        }
-                        text = evalPhrase(phraseBook, phrase, newMemory, t, level + 1, startTime);
-                        if (token.variable) {
-                            dvar = mFunction[1] + ':' + token.variable;
-                            memory[dvar] = text;
-                        }
-                        text = applyFilters(text, token.filters);
-                    } else {
-                        const phrase = lookupPhrase(phraseBook, token.text.trim());
-                        text = evalPhrase(phraseBook, phrase, memory, t, level + 1, startTime);
-                        if (dvar) {
-                            memory[dvar] = text;
-                        }
-                        text = applyFilters(text, token.filters);
-                    }
-                }
-                s += text;
-            }
-        }
-    }
-    return s;
-}
-
-class Token {
-    constructor(text, type) {
-        this.type = type;
-        if (this.type === TOKEN_REF) {
-            let amount = 1
-            let textWithoutTags = text.substring(2, text.length - 2).trim();
-            const m = AMOUNT_RE.exec(textWithoutTags);
-            if (m) {
-                textWithoutTags = m[1];
-                amount = parseInt(m[2]);
-            }
-            const textAndFilters = textWithoutTags.split('|');
-            textWithoutTags = textAndFilters[0];
-            const textAndVar = textWithoutTags.split(':');
-            this.text = textAndVar[0].trim();
-            if (textAndVar[1]) {
-                this.variable = textAndVar[1];
-            }
-            this.amount = amount;
-            this.filters = textAndFilters.slice(1).map(f => f.trim());
-        } else {
-            this.text = text;
-        }
-    }
-}
-
-function tokenize(phrase) {
-    const result = [];
-    let inTag = false;
-    const parts = phrase.split(TAG_RE);
-    let type;
-    for (let part of parts) {
-        if (part) {
-            if (inTag) {
-                type = TOKEN_REF;
-            } else {
-                type = TOKEN_TEXT;
-            }
-            result.push(new Token(part, type));
-        }
-        inTag = !inTag;
-    }
-    return result;
+    let interpreter = new Interpreter({ phraseBook, phrase, globalMemory, localMemory, t, level, startTime });
+    return interpreter.interpret();
 }
 
 function lookupPhrase(phraseBook, key) {
@@ -283,7 +917,7 @@ function parsePhraseBook(s) {
     }
     const phraseBook = {};
     for (let phrase of phrases) {
-        phraseBook[phrase.key] = phrase.values;
+        phraseBook[phrase.key] = phrase.values.map(text => ({text, tree: parsePhrase(text)}));
         if (phrase.parameters) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
@@ -291,8 +925,8 @@ function parsePhraseBook(s) {
     return phraseBook;
 }
 
-function generateString(phraseBook, rootKey = 'root', memory = {}, seed = 1234, t = 0.0) {
+function generateString(phraseBook, rootKey = 'root', globalMemory = {}, seed = 1234, t = 0.0) {
     Math.seedrandom(seed);
     const startTime = Date.now();
-    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey), memory, t, 0, startTime);
+    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey), globalMemory, {}, t, 0, startTime);
 }

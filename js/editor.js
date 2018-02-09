@@ -154,9 +154,11 @@ class Editor extends Component {
         this.state = state;
     }
 
-    generate() {
+    generate(parse=true) {
         try {
-            this.phraseBook = parsePhraseBook(this.state.source);
+            if (parse) {
+                this.phraseBook = parsePhraseBook(this.state.source);
+            }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
         } catch (e) {
@@ -211,7 +213,7 @@ class Editor extends Component {
         if (this.props.onSeedChanged) {
             this.props.onSeedChanged(seed);
         }
-        this.generate();
+        this.generate(false);
     }
 
     onGenerate() {
