@@ -805,10 +805,27 @@ class Interpreter {
         return s;
     }
 
+    visitEvilFilter(node) {
+        if (!node.parameters || node.parameters.length === 0) {
+            throw new Error('Evil filter takes at least one argument.');
+        }
+        const source = this.visit(node.node);
+        const getFn = new Function('_fn', source + 'return eval(_fn);');
+        const fnName = this.visit(node.parameters[0]);
+        const fn = getFn(fnName);
+        let parameters = [];
+        if (node.parameters.length > 1) {
+            parameters = node.parameters.slice(1).map(p => this.visit(p));
+        }
+        return fn.apply(null, parameters);
+    }
+
     visitFilter(node) {
         const f = node.name;
         if (f === 'repeat') {
             return this.visitRepeatFilter(node);
+        } else if (f === 'evil') {
+            return this.visitEvilFilter(node);
         }
         const v = this.visit(node.node);
         if (f === 'upper') {
