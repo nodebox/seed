@@ -4,9 +4,9 @@
 
 Here's a small example:
 
-<iframe src="/embed/-L0tY6Jn8y3IN3nq3onZ"></iframe>
+<iframe src="/embed/-L4ukZKf8y3IN3nq3onZ"></iframe>
 
-Let's look at the actual code we generate. The `root:` block has only one option which generates a `<svg>` tag. This tag contains properties for the `width` and `height` of the composition. We choose 300 here but you might choose different values depending on the size of your screen. The width and height are not absolutely required but not setting them will result in a tiny SVG document, which is not really useful. Inside of this tag we generate a `{{ circle * 50 }}`. This expands to 50 `{{ circle }}` blocks. In other words, we generate 50 circles.
+Let's look at the actual code we generate. The `root:` block has only one option which generates a `<svg>` tag. This tag contains properties for the `width` and `height` of the composition. We choose 300 here but you might choose different values depending on the size of your screen. The width and height are not absolutely required but not setting them will result in a tiny SVG document, which is not really useful. Inside of this tag we generate a `{{ circle|repeat(50) }}`. This expands to 50 `{{ circle }}` blocks. In other words, we generate 50 circles.
 
 The `circle:` block consists of a single option with a [&lt;circle&gt;](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/circle) tag. This a standard SVG element that has a number of properties:
 
@@ -22,7 +22,7 @@ What else can we generate? SVG has support for lines, paths, rectangles, circles
 
 Here's an example with the `<line>` element:
 
-<iframe src="/embed/-L0tYx0M59tsxmPkFBhs"></iframe>
+<iframe src="/embed/-L4ulAJ159tsxmPkFBhs"></iframe>
 
 A `<line>` has the following attributes:
 
@@ -39,7 +39,7 @@ Note that this also shows how to set a "background": just draw a rectangle the s
 
 We've already seen rectangles used as the background element. Here we use them to create a "city":
 
-<iframe src="/embed/-L0tc3J7ipeCyDsc1JTa"></iframe>
+<iframe src="/embed/-L4ulTe6peCyDsc1JTaZ"></iframe>
 
 A `<rect>` has the following attributes:
 
@@ -58,7 +58,7 @@ In this example we created rectangles for the building anchored to the bottom of
 
 Circles are a bit different since we specify their position from the center.
 
-<iframe src="/embed/-L0tlxjGBhmKHk6pTYRC"></iframe>
+<iframe src="/embed/-L4uln5fBhmKHk6pTYRC"></iframe>
 
 This example uses two tricks:
 
@@ -75,7 +75,7 @@ A `<circle>` has the following attributes:
 
 Polygons represent a closed shape defined by a set of points.
 
-<iframe src="/embed/-L0ybOOZnPzMk4jY5mtB"></iframe>
+<iframe src="/embed/-L4um4Q0nPzMk4jY5mtB"></iframe>
 
 The `points` attribute of a polygon contains pairs of X/Y coordinates, e.g. `10,80 50,10 90,80`. To generate a random list we use an extra space in front of a coordinate pair to separate them (otherwise we would get `10,8050,1090,80`).
 
@@ -89,13 +89,13 @@ Path is the most versatile and complex shape. It can generate straight lines, qu
 
 Here's an example using relative coordinates:
 
-<iframe src="/embed/-L0yhos5xKBplkyguQTm"></iframe>
+<iframe src="/embed/-L4umPG9KBplkyguQTmy"></iframe>
 
-Try to decrease the amount of paths generated (change `{{ path * 300 }}` to `{{ path * 3 }}`) to see how this works. Every path is one line, going down. To generate a line, we first move to the center using the `M` move to command: `M150,5`. We then use relative line command "`l`" to move down. Here we change the X position randomly but never the Y position. Y always goes down with a constant offset, but X can fluctuate, resulting in overlapping lines creating this structure.
+Try to decrease the amount of paths generated (change `{{ path|repeat(300) }}` to `{{ path|repeat(3) }}`) to see how this works. Every path is one line, going down. To generate a line, we first move to the center using the `M` move to command: `M150,5`. We then use relative line command "`l`" to move down. Here we change the X position randomly but never the Y position. Y always goes down with a constant offset, but X can fluctuate, resulting in overlapping lines creating this structure.
 
-Here's an example that uses absolute coordinates. Again, try changing `{{ path * 150 }}` to a smaller value and gradually increasing it to see what's going on:
+Here's an example that uses absolute coordinates. Again, try changing `{{ path|repeat(150) }}` to a smaller value and gradually increasing it to see what's going on:
 
-<iframe src="/embed/-L0yjzqujMm8H79NoJAh"></iframe>
+<iframe src="/embed/-L4umpKVMm8H79NoJAhw"></iframe>
 
 Here again we use a small viewBox to limit the coordinates to a grid.
 
@@ -107,7 +107,7 @@ A `<path>` has only one attribute:
 
 SVG text can be used for small text elements. It doesn't support line wrapping or more advanced features. Use absolutely-positioned `<div>`s for that.
 
-<iframe src="/embed/-L0ylcK66j1ddxfC0spL"></iframe>
+<iframe src="/embed/-L4un3XJj1ddxfC0spLw"></iframe>
 
 A `<text>` element has the following attributes:
 
@@ -133,12 +133,12 @@ You can color your shape by giving it a fill color or stroke color. Many options
 
 In addition, you can also specify the `mix-blend-mode` to use Photoshop-style blending modes. This is a CSS style property, so it needs to go in the style attribute. Using `stroke-dasharray` and blend modes you can create some pretty interesting effects:
 
-<iframe src="/embed/-L0tjSEkMcOWxluQdpzH"></iframe>
+<iframe src="/embed/-L4unNSOcOWxluQdpzHI"></iframe>
 
 ## Colors: Gradients
 
 To use gradients in SVG you first have to define them in a `<defs>` section at the top of the document. Here you define if you want a `<linearGradient>` or `<radialGradient>`, the direction of the gradient and the color stops. then you can refer to them using a URL.
 
-<iframe src="/embed/-L0yoeU8nR3yHXwYpK7i"></iframe>
+<iframe src="/embed/-L4unZXsnR3yHXwYpK7i"></iframe>
 
 Since we have to do this in two steps it difficult to generate a number of random gradients and have Seed refer to them. We're looking into a solution for this, using some sort of memory function so the system knows which gradients it has generated.

@@ -11,7 +11,7 @@ In Seed we can build our own recursive shapes by letting a block refer to itself
 
 If you look closely you can see that at the end of the `circle:` block we call `circle:`again! So a {{ circle }} expands to a `<circle.../>` tag and a {{ circle }}, which expands to a `<circle.../>` tag and a {{ circle }}, which expands to... you get the idea. This is a recursive process: a system that calls itself. Seed has a mechanism to stop at some point (by default after 50 iterations), otherwise our expansion would never end and the system would crash.
 
-Although this example certainly works to get many circles on screen, we would be better of to just use the multiply operator (`*`) as we've seen in the [generating graphics](/docs/graphics) chapter. Things get more interesting if every recursive shape changes a little bit: becomes bigger or smaller, rotates, etc. Like this:
+Although this example certainly works to get many circles on screen, we would be better of to just use the repeat filter `|repeat(num)` as we've seen in the [generating graphics](/docs/graphics) chapter. Things get more interesting if every recursive shape changes a little bit: becomes bigger or smaller, rotates, etc. Like this:
 
 <iframe src="/embed/-L0tQmnP25Y4AMejZ1FW"></iframe>
 

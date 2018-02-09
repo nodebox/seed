@@ -36,11 +36,11 @@ place:
 
 ## Repetition
 
-Tokens can be repeated by adding a multiply (`*`) symbol:
+Tokens can be repeated by adding a `|repeat()` filter:
 
 ```seed
 root:
-- {{ letter * 10 }}
+- {{ letter|repeat(10) }}
 
 letter:
 - A
@@ -76,16 +76,16 @@ Of course you can combine that with repetitions:
 
 ```seed
 root:
-- {{ A..Z * 10 }}
+- {{ A..Z|repeat(10) }}
 ```
 
 ## Animation
 
-You can animate between two values using `-`:
+You can animate between two values using `[min, max]`:
 
 ```seed
 root:
-- {{ 100-300 }}
+- {{ [100, 300] }}
 ```
 
 The value will animate back and forward between the two values over a period of 2 seconds.
@@ -104,7 +104,7 @@ stop_word:
 - as such
 ```
 
-Supported filters are `upper`, `lower`, `title` and `sentence`.
+Besides the `repeat` filter there are also an `int` filter (attempting to transform a string into an integer value), a `float` filter (attempting to transform a string into a real value) and a `str` filter (transforms an integer or real value into a string value). Other supported filters that operate on strings are `upper`, `lower`, `title` and `sentence`.
 
 ## SVG Graphics
 
@@ -114,7 +114,7 @@ To create graphics use a `<svg>` tag containing width and height attributes:
 
 ```seed
 root:
-- <svg width=100 height=100>{{ shape * 20 }}</svg>
+- <svg width=100 height=100>{{ shape|repeat(20) }}</svg>
 
 shape:
 - <rect x={{ 0..100 }} y={{ 0..100 }} width=5 height=5 />
@@ -125,7 +125,7 @@ To start in the middle of the composition, add a group with a transform to half 
 ```seed
 root:
 - <svg width=100 height=100>
-    <g transform="translate(50 50)">{{ shape * 25 }}</g>
+    <g transform="translate(50 50)">{{ shape|repeat(25) }}</g>
   </svg>
 
 shape:
