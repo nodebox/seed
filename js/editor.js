@@ -182,6 +182,8 @@ class Editor extends Component {
                 let newState = { loading: false, source: sketch.source };
                 if (sketch.seed) {
                     newState.seed = sketch.seed;
+                } else {
+                    newState.seed = this.state.seed;
                 }
                 this.setState(newState);
                 if (this.props.onSourceChanged) {
