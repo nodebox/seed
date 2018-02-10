@@ -261,11 +261,20 @@ class Lexer {
         while (this.currentChar !== null) {
             this.skipWhitespace();
             let start, end;
+            let negate = false;
+            if (this.currentChar === '-') {
+                negate = true;
+                this.advance();
+            }
             if (DIGITS.indexOf(this.currentChar) !== -1) {
                 start = this._number().value;
+                if (negate) {
+                    start = -start;
+                }
             } else {
                 this.error(this.currentChar);
             }
+            negate = false;
             this.skipWhitespace();
             if (this.currentChar !== ',') {
                 this.error(this.currentChar);
@@ -273,8 +282,15 @@ class Lexer {
                 this.advance();
             }
             this.skipWhitespace();
+            if (this.currentChar === '-') {
+                negate = true;
+                this.advance();
+            }
             if (DIGITS.indexOf(this.currentChar) !== -1) {
                 end = this._number().value;
+                if (negate) {
+                    end = -end;
+                }
             } else {
                 this.error(this.currentChar);
             }
