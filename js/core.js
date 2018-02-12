@@ -238,6 +238,9 @@ class Lexer {
             continue;
         }
         while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+            if (this.checkCurrentNextChars('..')) {
+                break;
+            }
             result += this.currentChar;
             this.advance();
         }
@@ -466,44 +469,24 @@ class Parser {
     _range(node) {
         if (this.currentToken.type === RANGE) {
             if (node.type === NODE_STRING && node.value.length !== 1) {
-                throw new Error(`RangeError. Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
+                throw new Error(`Range Error: Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
             }
             this.consume(RANGE);
             let start = node;
-            const filtersOnRange = this.currentToken.type !== LPAREN;
-            node = this.factor();
-            let firstFilter, lastFilter;
-            if (filtersOnRange) {
-                if (node.type === NODE_FILTER) {
-                    firstFilter = node;
-                    lastFilter = node;
-                    while (lastFilter.node.type === NODE_FILTER) {
-                        lastFilter = lastFilter.node;
-                    }
-                    node = lastFilter.node;
-                }
-            }
-            if (node.type === NODE_STRING && node.value.length !== 1) {
-                throw new Error(`RangeError. Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
-            } else if (node.type === NODE_RANGE) {
-                throw new Error(`RangeError. Range followed by another range at position ${ this.lexer.pos - 2 }.`);
+            let end = this.factor(false);
+            if (end.type === NODE_STRING && end.value.length !== 1) {
+                throw new Error(`Range Error: Only single character strings can be part of a range. The encountered string '${ end.value }' at position ${ this.lexer.pos } has a length of ${ end.value.length }.`);
             }
             if (start.type === NODE_KEY && start.key.length === 1 && !start.parameters) {
                 start = new Node(NODE_CHAR, { value: start.key });
             }
-            if (node.type === NODE_KEY && node.key.length === 1 && !node.parameters) {
-                node = new Node(NODE_CHAR, { value: node.key });
+            if (end.type === NODE_KEY && end.key.length === 1 && !end.parameters) {
+                end = new Node(NODE_CHAR, { value: end.key });
             }
-            node = new Node(NODE_RANGE, { start, end: node });
-            if (lastFilter) {
-                lastFilter.node = node;
-                return firstFilter;
-            } else {
-                return node;
-            }
-        } else {
-            return node;
+            node = new Node(NODE_RANGE, { start, end });
+            node = this._filters(node);
         }
+        return node;
     }
 
     _name(node) {
@@ -540,20 +523,15 @@ class Parser {
         return node;
     }
 
-    factor() {
+    factor(parseFiltersRange = true) {
         const token = this.currentToken;
         let node;
         if (token.type === PLUS) {
             this.consume(PLUS);
-            return new Node(NODE_UNARY_OP, { op: token.type, expression: this.factor() });
+            node = new Node(NODE_UNARY_OP, { op: token.type, expression: this.factor(false) });
         } else if (token.type === MINUS) {
             this.consume(MINUS);
-            node = new Node(NODE_UNARY_OP, { op: token.type, expression: this.factor() });
-            if (node.expression.type === NODE_RANGE && (node.expression.start.type === NODE_INTEGER || node.expression.start.type === NODE_REAL)) {
-                node = node.expression;
-                node.start = new Node(NODE_UNARY_OP, { op: token.type, expression: node.start });
-            }
-            return node;
+            node = new Node(NODE_UNARY_OP, { op: token.type, expression: this.factor(false) });
         } else if (token.type === INTEGER_CONST) {
             this.consume(INTEGER_CONST);
             node = new Node(NODE_INTEGER, { value: token.value });
@@ -582,8 +560,10 @@ class Parser {
         } else {
             throw new Error(`Invalid syntax: expected a symbol (an integer, float, string, ...) at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
         }
-        node = this._filters(node);
-        node = this._range(node);
+        if (parseFiltersRange) {
+            node = this._filters(node);
+            node = this._range(node);
+        }
         return node;
     }
 
@@ -759,9 +739,10 @@ class Interpreter {
         } else {
             end = this.visit(node.end);
         }
-        if (typeof end === 'string' && String(parseFloat(end)) === end) {
+        if (typeof end === 'string' && end.length === 1 && String(parseFloat(end)) === end) {
             end = parseFloat(end);
-        } else if (typeof start === 'number' && typeof end === 'number') {
+        }
+        if (typeof start === 'number' && typeof end === 'number') {
             return Math.floor(rand(start, end));
         }
         let min, max, charCode;
@@ -772,6 +753,12 @@ class Interpreter {
         } else if (typeof start === 'number' && String(start).length === 1 && typeof end === 'string' && end.length === 1) {
             return randomChar(String(start), end);
         } else {
+            if (typeof start === 'string') {
+                start = `"${start}"`;
+            }
+            if (typeof end === 'string') {
+                end = `"${end}"`;
+            }
             throw new Error(`Range Error: ${start}..${end}`);
         }
     }
