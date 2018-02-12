@@ -808,27 +808,40 @@ class Interpreter {
         return s;
     }
 
-    visitEvilFilter(node) {
+    jsEvaluator(source) {
+        const evaluator = new Function(source + 'return function (_fn, args) { return eval(_fn).apply(null, args) };');
+        return evaluator();
+    }
+
+    visitJSFilter(node) {
         if (!node.parameters || node.parameters.length === 0) {
-            throw new Error('Evil filter takes at least one argument.');
+            throw new Error('JS filter takes at least one argument.');
         }
         const source = this.visit(node.node);
-        const getFn = new Function('_fn', source + 'return eval(_fn);');
+        let evaluator;
+        if (node.node.type === NODE_NAMED_KEY) {
+            const name = `${node.key}:${node.name}:__evaluator`;
+            if (!this.globalMemory[name]) {
+                this.globalMemory[name] = this.jsEvaluator(source);
+            }
+            evaluator = this.globalMemory[name];
+        } else {
+            evaluator = this.jsEvaluator(source);
+        }
         const fnName = this.visit(node.parameters[0]);
-        const fn = getFn(fnName);
         let parameters = [];
         if (node.parameters.length > 1) {
             parameters = node.parameters.slice(1).map(p => this.visit(p));
         }
-        return fn.apply(null, parameters);
+        return evaluator(fnName, parameters);
     }
 
     visitFilter(node) {
         const f = node.name;
         if (f === 'repeat') {
             return this.visitRepeatFilter(node);
-        } else if (f === 'evil') {
-            return this.visitEvilFilter(node);
+        } else if (f === 'js') {
+            return this.visitJSFilter(node);
         }
         const v = this.visit(node.node);
         if (f === 'upper') {
