@@ -113,6 +113,8 @@ const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
 
+const TIMEOUT = window.location.search.slice(1) !== 'timeout=false';
+
 function bounce(t) {
     const a = t * Math.PI * 2;
     return 0.5 - Math.cos(a) * 0.5;
@@ -966,7 +968,7 @@ function parsePhrase(phrase) {
 
 function evalPhrase(phraseBook, phrase, globalMemory, localMemory, t=0.0, level=0, startTime=0) {
     if (level > MAX_LEVEL) return '';
-    if (startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
+    if (TIMEOUT && startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
         throw new Error('Evaluation timed out. Do you have a recursive function?');
     }
     let interpreter = new Interpreter({ phraseBook, phrase, globalMemory, localMemory, t, level, startTime });
