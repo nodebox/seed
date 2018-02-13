@@ -423,6 +423,9 @@ class DefLexer extends Lexer {
             } else if (this.currentChar === ':') {
                 this.advance();
                 return new Token(COLON, ':');
+            } else if (this.currentChar === ',') {
+                this.advance();
+                return new Token(COMMA, ',');
             } else if (this.currentChar === '(') {
                 this.advance();
                 return new Token(LPAREN, '(');
