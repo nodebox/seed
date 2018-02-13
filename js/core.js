@@ -110,6 +110,10 @@ const DIGITS = '0123456789';
 const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
 
+const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
+const POS_INTEGER_RE = /^\d+$/;
+
+const PREAMBLE_KEYS = ['depth'];
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
 
@@ -966,8 +970,14 @@ function parsePhrase(phrase) {
     return tree;
 }
 
+function maxLevel(phraseBook) {
+    const depth = phraseBook['%preamble'].depth;
+    if (depth !== undefined) { return depth; }
+    return MAX_LEVEL;
+}
+
 function evalPhrase(phraseBook, phrase, globalMemory, localMemory, t=0.0, level=0, startTime=0) {
-    if (level > MAX_LEVEL) return '';
+    if (level > maxLevel(phraseBook)) return '';
     if (TIMEOUT && startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
         throw new Error('Evaluation timed out. Do you have a recursive function?');
     }
@@ -984,7 +994,25 @@ function lookupPhrase(phraseBook, key) {
     return choice(v);
 }
 
+function parsePreamble(preamble, key, value, lineno) {
+    if (PREAMBLE_KEYS.indexOf(key) === -1) {
+        throw new Error(`Line ${ lineno + 1 }: unknown '${key}' property in preamble.`);
+    }
+    if (value === undefined) {
+        throw new Error(`Line ${ lineno + 1 }: no value given for '${key}' property.`);
+    }
+    value = value.trim();
+    if (key === 'depth') {
+        if (!value.match(POS_INTEGER_RE)) {
+            throw new Error(`Line ${ lineno + 1 }: expecting integer value for 'depth' property, not '${value}'.`);
+        } else {
+            preamble[key] = parseInt(value);
+        }
+    }
+}
+
 function parsePhraseBook(s) {
+    const preamble = {};
     const phrases = [];
     let currentPhrase;
     const lines = s.split('\n');
@@ -1012,6 +1040,16 @@ function parsePhraseBook(s) {
             // Ignore empty lines
             currentPhrase = undefined;
             continue;
+        } else if (line.startsWith('%')) {
+            // Preamble
+            currentPhrase = undefined;
+            let m = line.slice(1).match(PREAMBLE_RE);
+            if (m) {
+                parsePreamble(preamble, m[1], m[2], i);
+            } else if (trimmedLine.length !== 0) {
+                throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
+            }
+            continue;
         } else if (line.startsWith('- ')) {
             // Phrases are prefixed with '-'.
             if (!currentPhrase) {
@@ -1035,6 +1073,7 @@ function parsePhraseBook(s) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
     }
+    phraseBook['%preamble'] = preamble;
     return phraseBook;
 }
 
