@@ -104,12 +104,11 @@ const RPAREN = ')';
 const LBRACK = '[';
 const RBRACK = ']';
 const COMMA = ',';
+const COLON = ':';
 
 const DIGITS = '0123456789';
 const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
-
-const FUNCTION_RE = /^(.*)(\()(.*)(\))$/;
 
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
@@ -221,6 +220,9 @@ class Lexer {
 
     _key() {
         let result = '';
+        if (DIGITS.indexOf(this.currentChar) !== -1) {
+            this.error(this.currentChar);
+        }
         while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
             if (this.checkCurrentNextChars('..')) {
                 break;
@@ -406,6 +408,35 @@ class Lexer {
     nextToken() {
         while (this.currentChar !== null) {
             return this.insideRef ? this._ref() : this._text();
+        }
+        return new Token(EOF, null);
+    }
+}
+
+class DefLexer extends Lexer {
+    nextToken() {
+        let result = '';
+        while (this.currentChar !== null) {
+            if (this.currentChar === ' ') {
+                this.skipWhitespace();
+                continue;
+            } else if (this.currentChar === ':') {
+                this.advance();
+                return new Token(COLON, ':');
+            } else if (this.currentChar === '(') {
+                this.advance();
+                return new Token(LPAREN, '(');
+            } else if (this.currentChar === ')') {
+                this.advance();
+                return new Token(RPAREN, ')');
+            } else if (ALPHANUM.indexOf(this.currentChar) !== -1) {
+                return this._key();
+            }
+            result += this.currentChar;
+
+            if (result) {
+                this.error(result);
+            }
         }
         return new Token(EOF, null);
     }
@@ -636,6 +667,55 @@ class Parser {
             this.error(EOF);
         }
         return node;
+    }
+}
+
+class DefParser extends Parser {
+    constructor(text) {
+        super(new DefLexer(text));
+    }
+
+    _key() {
+        let key = this.currentToken.value;
+        this.consume(KEY);
+        return key;
+    }
+
+    _parameters() {
+        const parameters = [];
+        if (this.currentToken.type === LPAREN) {
+            this.consume(LPAREN);
+            if (this.currentToken.type === RPAREN) {
+                this.consume(RPAREN);
+                return parameters;
+            }
+            parameters.push(this._key());
+            while (this.currentToken.type === COMMA) {
+                this.consume(COMMA);
+                parameters.push(this._key());
+            }
+            if (this.currentToken.type === RPAREN) {
+                this.consume(RPAREN);
+                return parameters;
+            } else {
+                this.error(RPAREN);
+            }
+        }
+        return parameters;
+    }
+
+    parse() {
+        const key = this._key();
+        const parameters = this._parameters();
+        this.consume(COLON);
+        if (this.currentToken.type !== EOF) {
+            this.error(EOF);
+        }
+        if (parameters.length === 0) {
+            return {key};
+        } else {
+            return {key, parameters};
+        }
     }
 }
 
@@ -935,14 +1015,9 @@ function parsePhraseBook(s) {
             currentPhrase.values.push(line.substring(2));
         } else if (trimmedLine.endsWith(':')) {
             // Keys end with ":"
-            const key = trimmedLine.substring(0, trimmedLine.length - 1);
-            currentPhrase = { key: key, values: [] };
-            const m = FUNCTION_RE.exec(key);
-            if (m) {
-                currentPhrase.key = m[1];
-                let parametersText = m[3];
-                currentPhrase.parameters = parametersText.split(',').map(x => x.trim());
-            }
+            let parser = new DefParser(trimmedLine);
+            currentPhrase = parser.parse();
+            currentPhrase.values = [];
             phrases.push(currentPhrase);
         } else {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
