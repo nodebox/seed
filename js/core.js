@@ -112,8 +112,9 @@ const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
 
 const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
+const DURATION_RE = /^(\d+(\.\d+)?)\s*(s|ms)?$/;
 
-const PREAMBLE_KEYS = ['depth'];
+const PREAMBLE_KEYS = ['depth', 'duration'];
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
 
@@ -996,17 +997,28 @@ function lookupPhrase(phraseBook, key) {
 
 function parsePreamble(preamble, key, value, lineno) {
     if (PREAMBLE_KEYS.indexOf(key) === -1) {
-        throw new Error(`Line ${ lineno + 1 }: unknown '${key}' property in preamble.`);
+        throw new Error(`Line ${lineno}: unknown '${key}' property in preamble.`);
     }
     if (value === undefined) {
-        throw new Error(`Line ${ lineno + 1 }: no value given for '${key}' property.`);
+        throw new Error(`Line ${lineno}: no value given for '${key}' property.`);
     }
     value = value.trim();
     if (key === 'depth') {
         if (!value.match(POS_INTEGER_RE)) {
-            throw new Error(`Line ${ lineno + 1 }: expecting integer value for 'depth' property, not '${value}'.`);
+            throw new Error(`Line ${lineno}: expecting integer value for 'depth' property, not '${value}'.`);
         } else {
             preamble[key] = parseInt(value);
+        }
+    } else if (key === 'duration') {
+        let m = value.match(DURATION_RE);
+        if (!m || !m[3]) {
+            throw new Error(`Line ${lineno}: expecting seconds (e.g. 1s) or milliseconds (e.g. 1000ms) for 'duration' property, not '${value}'.`);
+        } else {
+            if (m[3] === 'ms') {
+                preamble[key] = parseFloat(m[1]) / 1000;
+            } else {
+                preamble[key] = parseFloat(m[1]);
+            }
         }
     }
 }
@@ -1045,7 +1057,7 @@ function parsePhraseBook(s) {
             currentPhrase = undefined;
             let m = line.slice(1).match(PREAMBLE_RE);
             if (m) {
-                parsePreamble(preamble, m[1], m[2], i);
+                parsePreamble(preamble, m[1], m[2], i + 1);
             } else if (trimmedLine.length !== 0) {
                 throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
             }

@@ -243,11 +243,17 @@ class Editor extends Component {
         }
     }
 
+    durationSeconds() {
+        const duration = this.phraseBook['%preamble'].duration;
+        if (duration !== undefined) { return duration; }
+        return 2.0;
+    }
+
     onDoFrame() {
         if (this.state.playing) {
             try {
                 const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
-                const durationSeconds = 2.0;
+                const durationSeconds = this.durationSeconds();
                 const t = (elapsedSeconds / durationSeconds) % 1.0;
                 const result = generateString(this.phraseBook, 'root', {}, this.state.seed, t);
                 this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
