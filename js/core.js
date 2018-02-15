@@ -114,7 +114,8 @@ const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
 const DURATION_RE = /^(\d+(\.\d+)?)\s*(s|ms)?$/;
 
-const PREAMBLE_KEYS = ['depth', 'duration'];
+const PREAMBLE_KEYS = ['depth', 'duration', 'animationType'];
+const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
 
@@ -125,8 +126,21 @@ function bounce(t) {
     return 0.5 - Math.cos(a) * 0.5;
 }
 
-function lerp(min, max, t) {
-    t = bounce(t);
+function linear(t) {
+    return t;
+}
+
+function lerp(min, max, t, animType) {
+    switch(animType){
+        case "linear": t = linear(t);
+            break;
+
+        case "bounce": t = bounce(t);
+            break;
+
+        default: t = bounce(t);
+            break;
+    }
     return min + t * (max - min);
 }
 
@@ -956,7 +970,8 @@ class Interpreter {
     }
 
     visitAnimRange(node) {
-        return lerp(node.start, node.end, this.t);
+        const type = this.phraseBook['%preamble'].animationType;
+        return lerp(node.start, node.end, this.t, type);
     }
 
     interpret() {
@@ -1019,6 +1034,14 @@ function parsePreamble(preamble, key, value, lineno) {
             } else {
                 preamble[key] = parseFloat(m[1]);
             }
+        }
+    }
+    else if (key === 'animationType') {
+        if(ANIMATION_TYPES.indexOf(value) !== -1){
+            preamble[key] = value;
+        }
+        else{
+            throw new Error(`Line ${lineno}: unknown value of property animationType`);
         }
     }
 }
