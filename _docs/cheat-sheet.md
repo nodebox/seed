@@ -34,6 +34,19 @@ place:
 - Antwerp
 ```
 
+A **global variable** will be inserted each time it is called again:
+
+```seed
+root:
+- {{ letter:str }} -- {{ letter:str }} -- {{ letter:str }}
+
+letter:
+- A
+- B
+- C
+- D
+```
+
 ## Repetition
 
 Tokens can be repeated by adding a `|repeat()` filter:
