@@ -142,3 +142,13 @@ To use gradients in SVG you first have to define them in a `<defs>` section at t
 <iframe src="/embed/-L4unZXsnR3yHXwYpK7i"></iframe>
 
 Since we have to do this in two steps it difficult to generate a number of random gradients and have Seed refer to them. We're looking into a solution for this, using some sort of memory function so the system knows which gradients it has generated.
+
+## Reusing elements
+
+You can store the contents of a generated element in a global variable by appending a `:` and a self chosen name. In the example below the two circles are stored in a global variable `{{ circles:cc }}` and inserted each time we call it again:
+
+<iframe src="/embed/-L5OP0m8GZURMUnY4l6Q"></iframe>
+
+A different way to reuse an element is to define it in the `<defs>` section, before other graphic elements. In the example below we defined a group `<g>` containing two generated `circle` elements. Note that we gave the group an `id` attribute with a self chosen name: `<g id="circles">`, we need this because we want to be able to reference it later. After the `<defs>` section, the `use` element takes this `id` attribute as the value for its `xlink:href` attribute. Note that we have to add a `#` before the attribute name. The `x` and `y` attributes of the `use` element are added to the original coordinates of the group, so that we can position them somewhere else:
+
+<iframe src="/embed/-L5OVW1o79IsuvGbTdIG"></iframe>
