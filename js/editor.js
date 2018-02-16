@@ -387,6 +387,8 @@ class Docs extends Component {
             { id: 'graphics', title: 'Generating Graphics' },
             { id: 'animation', title: 'Animation' },
             { id: 'recursion', title: 'Recursion' },
+            { id: 'css-tricks', title: 'Using CSS functionality' },
+            { id: 'arguments', title: 'Working with arguments' },
             { id: 'cheat-sheet', title: 'Cheat Sheet' },
         ]
         const items = [];
