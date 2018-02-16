@@ -250,58 +250,29 @@ class Editor extends Component {
     }
 
     animationType(){
-        const type = this.phraseBook['%preamble'].animationType;
-        if(type !== undefined) return type;
-        else return "bounce";
+        const type = this.phraseBook['%preamble'].animation;
+        if (type !== undefined) { return type; }
+        return 'bounce';
     }
 
     onDoFrame() {
         if (this.state.playing) {
             const animationType = this.animationType();
 
-            switch(animationType){
-                case "once": 
-                    try {
-                        const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
-                        const durationSeconds = this.durationSeconds();
-                        const t = (elapsedSeconds / durationSeconds) % 1.0;
+            try {
+                const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
+                const durationSeconds = this.durationSeconds();
+                const t = (elapsedSeconds / durationSeconds) % 1.0;
 
-                        if(durationSeconds <= elapsedSeconds) return false;
-                        else{
-                            const result = generateString(this.phraseBook, 'root', {}, this.state.seed, t);
-                            this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
-                            window.requestAnimationFrame(this.onDoFrame.bind(this));
-                        }
-                    } catch (e) {
-                        this.setState({ frame: 0, playing: false, debugOutput: e.message });
-                    }
-                    break;
-
-                case "linear":
-                    try {
-                        const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
-                        const durationSeconds = this.durationSeconds();
-                        const t = (elapsedSeconds / durationSeconds) % 1.0;
-                        const result = generateString(this.phraseBook, 'root', {}, this.state.seed, t);
-                        this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
-                        window.requestAnimationFrame(this.onDoFrame.bind(this));
-                    } catch (e) {
-                        this.setState({ frame: 0, playing: false, debugOutput: e.message });
-                    }
-                    break;
-
-                case "bounce":
-                    try {
-                        const elapsedSeconds = (Date.now() - this.startTime) / 1000.0;
-                        const durationSeconds = this.durationSeconds();
-                        const t = (elapsedSeconds / durationSeconds) % 1.0;
-                        const result = generateString(this.phraseBook, 'root', {}, this.state.seed, t);
-                        this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
-                        window.requestAnimationFrame(this.onDoFrame.bind(this));
-                    } catch (e) {
-                        this.setState({ frame: 0, playing: false, debugOutput: e.message });
-                    }
-                    break;
+                if (animationType === 'once' && durationSeconds <= elapsedSeconds) {
+                    this.setState({ frame: 0, playing: false });
+                } else {
+                    const result = generateString(this.phraseBook, 'root', {}, this.state.seed, t);
+                    this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
+                    window.requestAnimationFrame(this.onDoFrame.bind(this));
+                }
+            } catch (e) {
+                this.setState({ frame: 0, playing: false, debugOutput: e.message });
             }
         }
     }
