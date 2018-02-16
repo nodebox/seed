@@ -11,7 +11,7 @@ In Seed we can build our own recursive shapes by letting a block refer to itself
 
 If you look closely you can see that at the end of the `circle:` block we call `circle:`again! So a {{ circle }} expands to a `<circle.../>` tag and a {{ circle }}, which expands to a `<circle.../>` tag and a {{ circle }}, which expands to... you get the idea. This is a recursive process: a system that calls itself. Seed has a mechanism to stop at some point (by default after 50 iterations), otherwise our expansion would never end and the system would crash.
 
-Although this example certainly works to get many circles on screen, we would be better of to just use the repeat filter `|repeat(num)` as we've seen in the [generating graphics](/docs/graphics) chapter. Things get more interesting if every recursive shape changes a little bit: becomes bigger or smaller, rotates, etc. Like this:
+Although this example certainly works to get many circles on screen, we would be better off to just use the repeat filter `|repeat(num)` as we've seen in the [generating graphics](/docs/graphics) chapter. Things get more interesting if every recursive shape changes a little bit: becomes bigger or smaller, rotates, etc. Like this:
 
 <iframe src="/embed/-L0tQmnP25Y4AMejZ1FW"></iframe>
 
@@ -24,3 +24,10 @@ Each copy will have the transformation applied to it, so each copy will be rotat
 We can use this principle to generate many interesting recursive shapes, like trees:
 
 <iframe src="/embed/-L0tPtYTqxVpgbCzPcTY"></iframe>
+
+## Recursion depth
+
+By default, Seed uses a recursion depth of 50. This means blocks can call other blocks up until 50 levels deep. Since recursion could go on indefinitely, we have to limit the recursion depth somehow otherwise nothing ever would get rendered. It's possible to overrule the recursion depth however by using the `%depth` directive. In the example below the depth has been set to 20. See wat happens when you set it to a higher (or lower) value.
+
+<iframe src="/embed/-L5TF3bC-0IXWJDeg3sV"></iframe>
+
