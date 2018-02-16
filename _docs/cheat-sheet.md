@@ -47,6 +47,24 @@ letter:
 - D
 ```
 
+Passing **arguments** so that content can be used multiple times:
+
+```seed
+root:
+- {{ order(verb) }}
+
+order(action):
+- {{ action }} the doctor. {{ action }} the ambulance.
+- {{ action }} the police. {{ action }} the fire department.
+- {{ action }} my mother. {{ action }} my father.
+
+verb:
+- Call
+- Notify
+- Report to
+```
+
+
 ## Repetition
 
 Tokens can be repeated by adding a `|repeat()` filter:

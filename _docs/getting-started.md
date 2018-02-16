@@ -76,6 +76,13 @@ We now have everything to assemble the final sentence:
 Dear Uncle Bob, thank you for the golden retriever.
 ```
 
+## Passing arguments
+
+Optionally, a block can also take one or more arguments. You can use the values of these arguments each time you need them in your options. The arguments, or parameters, are defined between parentheses `(arg1, arg2, ...)` and separated by commas, before the `:` sign. So if for instance we have a block defined as `givethanks(adj):` and we call it with a value of, for example, 'shiny' `{{ givethanks('shiny') }}`, a potential option in `givethanks` written as `a {{ adj }} dishwasher`, will be replaced as 'a shiny dishwasher'. The value of an argument is only available to the current block, if you want to use in a subsequent block (through recursion or composition), you will need to pass it again.
+
+<iframe src="/embed/-L5SRuMRMRUsPDXiEozn"></iframe>
+
+
 ## More Complex Examples
 
 This is enough to do simple text generation. By making our replacements more complex, we can create huge grammar files. For example here is a Immanuel Kant philosophy generator:
