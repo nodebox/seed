@@ -76,14 +76,13 @@ RegExp.escape = function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
 
-function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+function getURLParameter(name, url) {
+    if (!url) { url = window.location.search; }
+    const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
         results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
+    if (!results) { return null; }
+    if (!results[2]) { return ''; }
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
 String.prototype.toTitleCase = function () {
@@ -129,7 +128,7 @@ const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
 
-const TIMEOUT = window.location.search.slice(1) !== 'timeout=false';
+const TIMEOUT = getURLParameter('timeout') !== 'false';
 
 function bounce(t) {
     const a = t * Math.PI * 2;

@@ -173,23 +173,20 @@ class Editor extends Component {
                 this.props.onSourceChanged(INITIAL_TEXT, true);
             }
             if (this.props.onSeedChanged) {
-                this.props.onSeedChanged(this.state.seed);
+                this.props.onSeedChanged(this.state.seed, true);
             }
             this.generate();
         } else {
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
-                const sketch = Object.assign({ key: this.props.id}, snap.val());
+                const sketch = Object.assign({ key: this.props.id }, snap.val());
                 let newState = { loading: false, source: sketch.source };
-                var saved_seed = getParameterByName("seed");
-                if (saved_seed) {
-                    newState.seed = saved_seed;
+                const urlSeed = getURLParameter('seed');
+                if (urlSeed) {
+                    newState.seed = urlSeed;
+                } else if (sketch.seed) {
+                    newState.seed = sketch.seed;
                 } else {
-                    if (sketch.seed) {
-                        newState.seed = sketch.seed;
-                    } else {
-                        newState.seed = this.state.seed;
-                    }
-                    window.history.pushState("", "", window.location.href + "?seed=" + newState.seed);
+                    newState.seed = this.state.seed;
                 }
 
                 this.setState(newState);
@@ -197,10 +194,9 @@ class Editor extends Component {
                     this.props.onSourceChanged(sketch.source, true);
                 }
                 if (this.props.onSeedChanged) {
-                    this.props.onSeedChanged(newState.seed);
+                    this.props.onSeedChanged(newState.seed, true);
                 }
                 this.generate();
-
             });
         }
     }
@@ -326,13 +322,15 @@ class Sketch extends Component {
         this.setState({ unsaved: !initialLoad, source });
     }
 
-    onSeedChanged(seed) {
+    onSeedChanged(seed, initialLoad=false) {
         this.setState({ seed });
-        var pathName = window.location.pathname.split('/');
-        if (pathName.length == 3) {
-            var newPathname = pathName[2].split('?');
-            newPathname = pathName[1] + "/" + newPathname + "?seed=" + seed;
-            window.history.pushState("", "", window.location.protocol + "//" + window.location.host + "/" + newPathname);
+        if (!initialLoad) {
+            const pathName = window.location.pathname.split('/');
+            if (pathName.length === 3 && pathName[2].length > 0) {
+                let newPathname = pathName[2].split('?');
+                newPathname = `${ pathName[1] }/${ newPathname }?seed=${ seed }`;
+                window.history.pushState('', '', window.location.protocol + '//' + window.location.host + '/' + newPathname);
+            }
         }
     }
 
@@ -361,7 +359,6 @@ class Sketch extends Component {
             this.setState({ saving: false, unsaved: false });
             route(`/sketch/${ref.key}`);
         });
-
     }
 
     render(props, state) {
@@ -372,7 +369,6 @@ class Sketch extends Component {
             ),
             h(Editor, {
                 id: props.id,
-                seed: state.seed,
                 onSourceChanged: this.onSourceChanged.bind(this),
                 onSeedChanged: this.onSeedChanged.bind(this),
                 headerRight: h('a', { href:'/docs', target: '_blank' }, 'Documentation')
