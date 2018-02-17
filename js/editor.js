@@ -178,13 +178,20 @@ class Editor extends Component {
             this.generate();
         } else {
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
-                const sketch = Object.assign({ key: this.props.id }, snap.val());
+                const sketch = Object.assign({ key: this.props.id}, snap.val());
                 let newState = { loading: false, source: sketch.source };
-                if (sketch.seed) {
-                    newState.seed = sketch.seed;
+                var saved_seed = getParameterByName("seed");
+                if (saved_seed) {
+                    newState.seed = saved_seed;
                 } else {
-                    newState.seed = this.state.seed;
+                    if (sketch.seed) {
+                        newState.seed = sketch.seed;
+                    } else {
+                        newState.seed = this.state.seed;
+                    }
+                    window.history.pushState("", "", window.location.href + "?seed=" + newState.seed);
                 }
+
                 this.setState(newState);
                 if (this.props.onSourceChanged) {
                     this.props.onSourceChanged(sketch.source, true);
@@ -193,6 +200,7 @@ class Editor extends Component {
                     this.props.onSeedChanged(newState.seed);
                 }
                 this.generate();
+
             });
         }
     }
@@ -320,6 +328,12 @@ class Sketch extends Component {
 
     onSeedChanged(seed) {
         this.setState({ seed });
+        var pathName = window.location.pathname.split('/');
+        if (pathName.length == 3) {
+            var newPathname = pathName[2].split('?');
+            newPathname = pathName[1] + "/" + newPathname + "?seed=" + seed;
+            window.history.pushState("", "", window.location.protocol + "//" + window.location.host + "/" + newPathname);
+        }
     }
 
     componentDidMount() {
@@ -347,6 +361,7 @@ class Sketch extends Component {
             this.setState({ saving: false, unsaved: false });
             route(`/sketch/${ref.key}`);
         });
+
     }
 
     render(props, state) {
@@ -357,6 +372,7 @@ class Sketch extends Component {
             ),
             h(Editor, {
                 id: props.id,
+                seed: state.seed,
                 onSourceChanged: this.onSourceChanged.bind(this),
                 onSeedChanged: this.onSeedChanged.bind(this),
                 headerRight: h('a', { href:'/docs', target: '_blank' }, 'Documentation')
