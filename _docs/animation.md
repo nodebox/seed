@@ -15,4 +15,6 @@ SVG has a number of interesting properties to animate. For example, you can anim
 
 <iframe src="/embed/-L4uobpR1wxzBc-9F61E"></iframe>
 
-Animation support is limited at the moment. We're still working on being able to set the speed and animation type, and being able to export animations as GIFs.
+To change the duration of an animation you can use the directive `%duration` as shown belown. You can specify the length in seconds `s` or in milliseconds `ms`. By default Seed uses an `%animation` setting of the `bounce` type, meaning it takes half the duration to move from beginning to end, and the other half to go back. You can also set the animation to the type `linear`, in that case it will move from beginning to end and return immediately to the beginning. Finally, if you set the animation to the type `once`, it will act the same way as with `bounce`, but the animation will finish as soon as it has ended the first time. You can try these settings by testing the animation below:
+
+<iframe src="/embed/-L5Y0BTIsL0FkiNMkASG"></iframe>
