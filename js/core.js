@@ -1048,7 +1048,7 @@ function parsePreamble(preamble, key, value, lineno) {
     }
 }
 
-function parsePhraseBook(s) {
+async function parsePhraseBook(s) {
     const preamble = {};
     const phrases = [];
     let currentPhrase;
