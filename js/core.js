@@ -122,6 +122,7 @@ const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
 const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
 const DURATION_RE = /^(\d+(\.\d+)?)\s*(s|ms)?$/;
+const IMPORT_RE = /^\s*import\s*\"(.+)\"\s*as\s*(([a-zA-Z]|\_)([a-zA-Z0-9]|\_|\.(?!\.))*)\s*$/;
 
 const PREAMBLE_KEYS = ['depth', 'duration', 'animation'];
 const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
@@ -1048,7 +1049,10 @@ function parsePreamble(preamble, key, value, lineno) {
     }
 }
 
+const importedSketches = {};
+
 async function parsePhraseBook(s) {
+    const importSketches = [];
     const preamble = {};
     const phrases = [];
     let currentPhrase;
@@ -1070,6 +1074,15 @@ async function parsePhraseBook(s) {
             console.assert(typeof lastPhrase === 'string');
             currentPhrase.values[lastIndex] = lastPhrase + line.substring(2);
         } else if (trimmedLine[0] === '#') {
+            let l = trimmedLine.slice(1).trim();
+            if (l.startsWith('import')) {
+                let m = l.match(IMPORT_RE);
+                if (m) {
+                    importSketches.push({name: m[1], alias: m[2], line: i + 1});
+                } else {
+                    throw new Error(`Line ${ i + 1 }: Error in import statement.`);
+                }
+            }
             // Ignore comments
             currentPhrase = undefined;
             continue;
@@ -1103,6 +1116,24 @@ async function parsePhraseBook(s) {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
         }
     }
+
+    const imports = {};
+    for (let i = 0; i < importSketches.length; i += 1) {
+        let o = importSketches[i];
+        let sketch;
+        if (importedSketches[o.name]) {
+            sketch = importedSketches[o.name];
+        } else {
+            let snap = await firebase.database().ref(`sketch/${o.name}`).once('value');
+            sketch = Object.assign({}, snap.val());
+            if (sketch.source === undefined) {
+                throw new Error(`Line ${ o.line }: Could not import sketch named "${o.name}".`)
+            }
+            importedSketches[o.name] = sketch;
+        }
+        let pb = await parsePhraseBook(sketch.source);
+        imports[o.alias] = pb;
+    }
     const phraseBook = {};
     for (let phrase of phrases) {
         phraseBook[phrase.key] = phrase.values.map(text => ({text, tree: parsePhrase(text)}));
@@ -1111,6 +1142,7 @@ async function parsePhraseBook(s) {
         }
     }
     phraseBook['%preamble'] = preamble;
+    phraseBook['%imports'] = imports;
     return phraseBook;
 }
 
