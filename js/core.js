@@ -876,9 +876,19 @@ class Interpreter {
         if (searchLocal && this.localMemory[node.key] !== undefined) {
             return this.localMemory[node.key];
         }
-        const phrase = lookupPhrase(this.phraseBook, node.key);
+        let key, phraseBook, globalMemory;
+        if (this.phraseBook['%imports'][node.key] !== undefined) {
+            phraseBook = this.phraseBook['%imports'][node.key];
+            key = 'root';
+            globalMemory = {};
+        } else {
+            phraseBook = this.phraseBook;
+            key = node.key;
+            globalMemory = this.globalMemory;
+        }
+        const phrase = lookupPhrase(phraseBook, key);
         const localMemory = {};
-        const parameters = this.phraseBook[node.key].parameters;
+        const parameters = phraseBook[key].parameters;
         if (parameters) {
             for (let i = 0; i < parameters.length; i += 1) {
                 let name = parameters[i];
@@ -889,7 +899,7 @@ class Interpreter {
                 }
             }
         }
-        return evalPhrase(this.phraseBook, phrase, this.globalMemory, localMemory, this.t, this.level + 1, this.startTime);
+        return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime);
     }
 
     visitNamedKey(node) {
