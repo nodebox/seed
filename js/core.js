@@ -118,6 +118,7 @@ const COLON = ':';
 const DIGITS = '0123456789';
 const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const ALPHANUM = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._';
+const WHITESPACE = '  \t'; // todo: add more to these
 
 const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
@@ -173,7 +174,7 @@ class Lexer {
     }
 
     skipWhitespace() {
-        while (this.currentChar === ' ') {
+        while (WHITESPACE.indexOf(this.currentChar) !== -1) {
             this.advance();
         }
     }
@@ -260,7 +261,7 @@ class Lexer {
 
     _filter() {
         let result = '';
-        while (this.currentChar !== null && this.currentChar === ' ') {
+        while (this.currentChar !== null && WHITESPACE.indexOf(this.currentChar) !== -1) {
             this.skipWhitespace();
             continue;
         }
@@ -276,7 +277,7 @@ class Lexer {
 
     _varg() {
         let result = '';
-        while (this.currentChar !== null && this.currentChar === ' ') {
+        while (this.currentChar !== null && WHITESPACE.indexOf(this.currentChar) !== -1) {
             this.skipWhitespace();
             continue;
         }
@@ -337,7 +338,7 @@ class Lexer {
     _ref() {
         let result = '';
         while (this.currentChar !== null) {
-            if (this.currentChar === ' ') {
+            if (WHITESPACE.indexOf(this.currentChar) !== -1) {
                 this.skipWhitespace();
                 continue;
             } else if (this.checkCurrentNextChars(VARIABLE_TAG_START)) {
@@ -442,7 +443,7 @@ class DefLexer extends Lexer {
     nextToken() {
         let result = '';
         while (this.currentChar !== null) {
-            if (this.currentChar === ' ') {
+            if (WHITESPACE.indexOf(this.currentChar) !== -1) {
                 this.skipWhitespace();
                 continue;
             } else if (this.currentChar === ':') {
