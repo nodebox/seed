@@ -124,7 +124,7 @@ const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
 const DURATION_RE = /^(\d+(\.\d+)?)\s*(s|ms)?$/;
 
-const PREAMBLE_KEYS = ['depth', 'duration', 'animation'];
+const PREAMBLE_KEYS = ['depth', 'duration', 'animation', 'script'];
 const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
@@ -963,7 +963,7 @@ class Interpreter {
             return String(v).substring(0, 1).toUpperCase() + String(v).substring(1);
         } else if (f === 'str') {
             return String(v);
-        } else if (f === 'int') { 
+        } else if (f === 'int') {
             let result = parseInt(v);
             return isNaN(result) ? 0 : result;
         } else if (f === 'float') {
@@ -1046,6 +1046,13 @@ function parsePreamble(preamble, key, value, lineno) {
         } else {
             preamble[key] = value;
         }
+    } else if (key === 'script') {
+        if (!value.endsWith('.js')) throw new Error(`Line ${lineno}: expecting script preamble to end with .js.`);
+        const currentScripts = Array.from(document.head.getElementsByTagName('script'));
+        if (currentScripts.some(tag => tag.src === value)) return;
+        const tag = document.createElement('script');
+        tag.setAttribute('src', value);
+        document.head.appendChild(tag);
     }
 }
 
