@@ -1096,10 +1096,7 @@ async function parsePhraseBook(s) {
             currentPhrase = undefined;
             let m = line.slice(1).match(PREAMBLE_RE);
             let n = trimmedLine.slice(1).trim();
-            if (m) {
-                parsePreamble(preamble, m[1], m[2], i + 1);
-            } 
-            else if(n.startsWith('import')) {
+            if(n.startsWith('import')) {
                 let l = n.match(IMPORT_RE);
                 if (l) {
                     importSketches.push({name: l[1], alias: l[2], line: i + 1});
@@ -1107,6 +1104,9 @@ async function parsePhraseBook(s) {
                     throw new Error(`Line ${ i + 1 }: Error in import statement.`);
                 }
             }
+            else if (m) {
+                parsePreamble(preamble, m[1], m[2], i + 1);
+            } 
             else if (trimmedLine.length !== 0) {
                 throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
             }
