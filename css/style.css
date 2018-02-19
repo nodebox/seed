@@ -363,6 +363,7 @@ a {
 }
 
 .editor__viewer {
+    overflow: auto;
     border-left: 2px solid #ddd;
     flex: 1;
 }
