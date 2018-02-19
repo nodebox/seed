@@ -1084,15 +1084,6 @@ async function parsePhraseBook(s) {
             console.assert(typeof lastPhrase === 'string');
             currentPhrase.values[lastIndex] = lastPhrase + line.substring(2);
         } else if (trimmedLine[0] === '#') {
-            let l = trimmedLine.slice(1).trim();
-            if (l.startsWith('import')) {
-                let m = l.match(IMPORT_RE);
-                if (m) {
-                    importSketches.push({name: m[1], alias: m[2], line: i + 1});
-                } else {
-                    throw new Error(`Line ${ i + 1 }: Error in import statement.`);
-                }
-            }
             // Ignore comments
             currentPhrase = undefined;
             continue;
@@ -1104,9 +1095,19 @@ async function parsePhraseBook(s) {
             // Preamble
             currentPhrase = undefined;
             let m = line.slice(1).match(PREAMBLE_RE);
+            let n = trimmedLine.slice(1).trim();
             if (m) {
                 parsePreamble(preamble, m[1], m[2], i + 1);
-            } else if (trimmedLine.length !== 0) {
+            } 
+            else if(n.startsWith('import')) {
+                let l = n.match(IMPORT_RE);
+                if (l) {
+                    importSketches.push({name: l[1], alias: l[2], line: i + 1});
+                } else {
+                    throw new Error(`Line ${ i + 1 }: Error in import statement.`);
+                }
+            }
+            else if (trimmedLine.length !== 0) {
                 throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
             }
             continue;
