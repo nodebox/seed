@@ -383,6 +383,7 @@ class Sketch extends Component {
         const ref = firebase.database().ref('sketch').push();
         ref.set(sketch, () => {
             this.setState({ saving: false, unsaved: false });
+            window.localStorage.removeItem(this.props.id || 'empty');
             route(`/sketch/${ref.key}`);
         }).then(() => {
             firebase.database().goOffline();
