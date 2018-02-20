@@ -326,13 +326,8 @@ class Sketch extends Component {
 
     onSeedChanged(seed, initialLoad=false) {
         this.setState({ seed });
-        if (!initialLoad) {
-            const pathName = window.location.pathname.split('/');
-            if (pathName.length === 3 && pathName[2].length > 0) {
-                let newPathname = pathName[2].split('?');
-                newPathname = `${ pathName[1] }/${ newPathname }?seed=${ seed }`;
-                window.history.pushState('', '', window.location.protocol + '//' + window.location.host + '/' + newPathname);
-            }
+        if (!initialLoad && this.props.id !== undefined) {
+            window.history.pushState('', '', `${window.location.protocol}\/\/${window.location.host}/sketch/${this.props.id}?seed=${seed}`);
         }
     }
 
