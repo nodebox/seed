@@ -177,7 +177,9 @@ class Editor extends Component {
             }
             this.generate();
         } else {
+            firebase.database().goOnline();
             firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
+                firebase.database().goOffline();
                 const sketch = Object.assign({ key: this.props.id }, snap.val());
                 let newState = { loading: false, source: sketch.source };
                 const urlSeed = getURLParameter('seed');
@@ -354,10 +356,13 @@ class Sketch extends Component {
         sketch.source = this.state.source;
         sketch.seed = this.state.seed;
         if (this.props.id) sketch.parent = this.props.id;
+        firebase.database().goOnline();
         const ref = firebase.database().ref('sketch').push();
         ref.set(sketch, () => {
             this.setState({ saving: false, unsaved: false });
             route(`/sketch/${ref.key}`);
+        }).then(() => {
+            firebase.database().goOffline();
         });
     }
 
