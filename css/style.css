@@ -248,6 +248,20 @@ a {
     padding-top: 0;
 }
 
+.localversion {
+    position: fixed;
+    color: white;
+    top: 15px;
+    left: 240px;
+    height: 50px;
+    z-index: 1000;
+}
+
+.localversion .button {
+    margin-left: 10px;
+    margin-right: 0;
+}
+
 .editor__source-wrap,
 .editor__viewer-wrap {
     flex: 1;

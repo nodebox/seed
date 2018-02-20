@@ -168,9 +168,16 @@ class Editor extends Component {
 
     componentDidMount() {
         document.querySelector('html').classList.add('fullscreen');
+        let localSource;
         if (!this.props.id) {
             if (this.props.onSourceChanged) {
-                this.props.onSourceChanged(INITIAL_TEXT, true);
+                localSource = window.localStorage.getItem('empty');
+                if (localSource !== null && localSource !== undefined) {
+                    this.props.onSourceChanged(localSource, true, true);
+                    this.setState({ source: localSource, origSource: INITIAL_TEXT });
+                } else {
+                    this.props.onSourceChanged(INITIAL_TEXT, true);
+                }
             }
             if (this.props.onSeedChanged) {
                 this.props.onSeedChanged(this.state.seed, true);
@@ -182,6 +189,11 @@ class Editor extends Component {
                 firebase.database().goOffline();
                 const sketch = Object.assign({ key: this.props.id }, snap.val());
                 let newState = { loading: false, source: sketch.source };
+                localSource = window.localStorage.getItem(this.props.id);
+                if (localSource !== null && localSource !== undefined) {
+                    newState.origSource = sketch.source;
+                    newState.source = localSource;
+                }
                 const urlSeed = getURLParameter('seed');
                 if (urlSeed) {
                     newState.seed = urlSeed;
@@ -193,7 +205,7 @@ class Editor extends Component {
 
                 this.setState(newState);
                 if (this.props.onSourceChanged) {
-                    this.props.onSourceChanged(sketch.source, true);
+                    this.props.onSourceChanged(newState.source, true, localSource !== null && localSource !== undefined);
                 }
                 if (this.props.onSeedChanged) {
                     this.props.onSeedChanged(newState.seed, true);
@@ -283,10 +295,22 @@ class Editor extends Component {
         }
     }
 
+    restoreOriginalVersion() {
+        this.setState({ source: this.state.origSource, origSource: undefined });
+        this.props.onSourceChanged(this.state.origSource, true);
+        window.localStorage.removeItem(this.props.id || 'empty');
+    }
+
     render(props, state) {
         const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
         const source = state.loading ? 'Loading...' : state.source;
-        return h('div', { className: 'editor' },
+        let localVersionDiv;
+        if (this.state.origSource) {
+            localVersionDiv = h('div', { className: 'localversion'}, 
+                'Warning! You are currently viewing a previously modified version of this sketch.',
+                h('button', {class: 'button', onClick: this.restoreOriginalVersion.bind(this) }, 'Restore original version'));
+        }
+        return h('div', { className: 'editor' }, localVersionDiv,
             h('div', { className: 'editor__source-wrap'},
                 h('div', { className: 'editor__toolbar' },
                     h('button', { class: 'button', onClick: this.onGenerate.bind(this) }, 'Generate'),
@@ -320,8 +344,12 @@ class Sketch extends Component {
         this.state = { saving: false, unsaved: false, source: undefined, seed: undefined };
     }
 
-    onSourceChanged(source, initialLoad) {
-        this.setState({ unsaved: !initialLoad, source });
+    onSourceChanged(source, initialLoad, localSource=false) {
+        this.setState({ unsaved: localSource || !initialLoad, source });
+        if (!initialLoad) {
+            const key = this.props.id || 'empty';
+            window.localStorage.setItem(key, source);
+        }
     }
 
     onSeedChanged(seed, initialLoad=false) {
