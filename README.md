@@ -14,7 +14,13 @@ The app runs as a single-page application, so we use [serve](https://www.npmjs.c
     serve -s
 
 ## Deploy
+Do this once:
 
     npm install -g firebase-tools
     firebase login
-    firebase deploy
+
+Do this every time you want to deploy:
+
+    ./deploy.sh
+
+This will copy all the files over to the _build directory, and a timestamp to the CSS and JS files so we immediately see the latest version.
