@@ -96,9 +96,16 @@ class SeedPicker extends Component {
 }
 
 class Header extends Component {
+    checkUnsaved(e) {
+        if (this.props.unsaved && !confirm('You have unsaved changes.')) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    }
+
     render(props) {
         return h('header', {class: 'header'},
-            h('a', {class: 'header__logo', href: '/'}, 'Seed'),
+            h('a', {class: 'header__logo', href: '/', onClick: this.checkUnsaved.bind(this) }, 'Seed'),
             h('nav', {class: 'header__nav'}, props.children)
         );
     }
@@ -396,7 +403,7 @@ class Sketch extends Component {
     render(props, state) {
         let saveLabel = state.saving ? 'Saving...' : 'Save';
         return h('div', {class: 'app'},
-            h(Header, {},
+            h(Header, { unsaved: !!state.unsaved },
                 h('button', {class: 'button save-button' + (state.unsaved ? ' unsaved' : ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
             ),
             h(Editor, {
