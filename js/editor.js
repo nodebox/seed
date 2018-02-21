@@ -28,16 +28,7 @@ const gMarkedRenderer = new marked.Renderer();
 gMarkedRenderer.code = function(code, lang) {
     let html = '<pre><code>' + escape(code) + '</code></pre>';
     if (lang === 'seed') {
-        let result;
-        try {
-            console.log('rendering', code);
-            const phraseBook = parsePhraseBook(code);
-            result = generateString(phraseBook);
-        } catch (e) {
-            console.error(e);
-            result = e.stack;
-        }
-        html = `<div class="code-wrap">${ html }<div class="code-result">${ result }</div></div>`;
+        html = `<div class="code-wrap">${ html }<div class="code-result"></div></div>`;
     }
     return html;
 }
@@ -161,10 +152,10 @@ class Editor extends Component {
         this.state = state;
     }
 
-    generate(parse=true) {
+    async generate(parse=true) {
         try {
             if (parse) {
-                this.phraseBook = parsePhraseBook(this.state.source);
+                this.phraseBook = await parsePhraseBook(this.state.source);
             }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
@@ -484,6 +475,20 @@ class Docs extends Component {
 
     componentDidUpdate() {
         this.onPage();
+        if (window.location.pathname.split('/')[1] === 'docs') {
+            let cw = document.getElementsByClassName('code-wrap');
+            for (let i = 0; i < cw.length; i += 1) {
+                let el = cw[i];
+                let code = el.getElementsByTagName('code')[0];
+                let codeResult = el.getElementsByClassName('code-result')[0];
+                if (code !== undefined && codeResult !== undefined) {
+                    parsePhraseBook(code.textContent)
+                    .then(phraseBook => generateString(phraseBook))
+                    .then(result => { codeResult.innerHTML = result; })
+                    .catch(err => { codeResult.innerHTML = err; });
+                }
+            }
+        }
     }
 }
 

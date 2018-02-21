@@ -123,6 +123,7 @@ const WHITESPACE = '  \t'; // todo: add more to these
 const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
 const DURATION_RE = /^(\d+(\.\d+)?)\s*(s|ms)?$/;
+const IMPORT_RE = /^\s*import\s+(.+)\s+as\s+(([a-zA-Z]|\_)([a-zA-Z0-9]|\_|\.(?!\.))*)\s*$/;
 
 const PREAMBLE_KEYS = ['depth', 'duration', 'animation', 'script'];
 const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
@@ -876,9 +877,19 @@ class Interpreter {
         if (searchLocal && this.localMemory[node.key] !== undefined) {
             return this.localMemory[node.key];
         }
-        const phrase = lookupPhrase(this.phraseBook, node.key);
+        let key, phraseBook, globalMemory;
+        if (this.phraseBook['%imports'][node.key] !== undefined) {
+            phraseBook = this.phraseBook['%imports'][node.key];
+            key = 'root';
+            globalMemory = {};
+        } else {
+            phraseBook = this.phraseBook;
+            key = node.key;
+            globalMemory = this.globalMemory;
+        }
+        const phrase = lookupPhrase(phraseBook, key);
         const localMemory = {};
-        const parameters = this.phraseBook[node.key].parameters;
+        const parameters = phraseBook[key].parameters;
         if (parameters) {
             for (let i = 0; i < parameters.length; i += 1) {
                 let name = parameters[i];
@@ -889,7 +900,7 @@ class Interpreter {
                 }
             }
         }
-        return evalPhrase(this.phraseBook, phrase, this.globalMemory, localMemory, this.t, this.level + 1, this.startTime);
+        return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime);
     }
 
     visitNamedKey(node) {
@@ -1056,7 +1067,10 @@ function parsePreamble(preamble, key, value, lineno) {
     }
 }
 
-function parsePhraseBook(s) {
+const importedSketches = {};
+
+async function parsePhraseBook(s) {
+    const importSketches = [];
     const preamble = {};
     const phrases = [];
     let currentPhrase;
@@ -1088,10 +1102,21 @@ function parsePhraseBook(s) {
         } else if (line.startsWith('%')) {
             // Preamble
             currentPhrase = undefined;
-            let m = line.slice(1).match(PREAMBLE_RE);
+            let m, l = trimmedLine.slice(1).trim();
+            if (l.startsWith('import')) {
+                m = l.match(IMPORT_RE);
+                if (m) {
+                    importSketches.push({name: m[1], alias: m[2], line: i + 1});
+                    continue;
+                } else {
+                    throw new Error(`Line ${ i + 1 }: Error in import statement.`);
+                }
+            }
+            m = line.slice(1).match(PREAMBLE_RE);
             if (m) {
                 parsePreamble(preamble, m[1], m[2], i + 1);
-            } else if (trimmedLine.length !== 0) {
+            } 
+            else if (trimmedLine.length !== 0) {
                 throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
             }
             continue;
@@ -1111,6 +1136,24 @@ function parsePhraseBook(s) {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
         }
     }
+
+    const imports = {};
+    for (let i = 0; i < importSketches.length; i += 1) {
+        let o = importSketches[i];
+        let sketch;
+        if (importedSketches[o.name]) {
+            sketch = importedSketches[o.name];
+        } else {
+            let snap = await firebase.database().ref(`sketch/${o.name}`).once('value');
+            sketch = Object.assign({}, snap.val());
+            if (sketch.source === undefined) {
+                throw new Error(`Line ${ o.line }: Could not import sketch named "${o.name}".`)
+            }
+            importedSketches[o.name] = sketch;
+        }
+        let pb = await parsePhraseBook(sketch.source);
+        imports[o.alias] = pb;
+    }
     const phraseBook = {};
     for (let phrase of phrases) {
         phraseBook[phrase.key] = phrase.values.map(text => ({text, tree: parsePhrase(text)}));
@@ -1119,6 +1162,7 @@ function parsePhraseBook(s) {
         }
     }
     phraseBook['%preamble'] = preamble;
+    phraseBook['%imports'] = imports;
     return phraseBook;
 }
 
