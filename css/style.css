@@ -49,6 +49,10 @@ a {
     color: inherit;
 }
 
+a.underline {
+    text-decoration: underline;
+}
+
 /* Components */
 
 .button {
@@ -251,15 +255,13 @@ a {
 .localversion {
     position: fixed;
     color: white;
-    top: 15px;
-    left: 240px;
-    height: 50px;
+    top: 0;
+    right: 100px;
+    line-height: var(--header-height);
     z-index: 1000;
-}
-
-.localversion .button {
-    margin-left: 10px;
-    margin-right: 0;
+    overflow: hidden;
+    font-size: 12px;
+    text-align: right;
 }
 
 .editor__source-wrap,
