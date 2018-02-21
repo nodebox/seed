@@ -365,7 +365,7 @@ class Sketch extends Component {
     onSeedChanged(seed, initialLoad=false) {
         this.setState({ seed });
         if (!initialLoad && this.props.id !== undefined) {
-            window.history.pushState('', '', `${window.location.protocol}\/\/${window.location.host}/sketch/${this.props.id}?seed=${seed}`);
+            window.history.replaceState('', '', `${window.location.protocol}\/\/${window.location.host}/sketch/${this.props.id}?seed=${seed}`);
         }
     }
 
