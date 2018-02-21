@@ -31,8 +31,18 @@ gMarkedRenderer.code = function(code, lang) {
         let result;
         try {
             console.log('rendering', code);
-            const phraseBook = parsePhraseBook(code);
-            result = generateString(phraseBook);
+            
+
+            if(checkImport(code)){
+                    firebase.database().ref(`sketch/${checkImport(code)}`).once('value', snap => {
+                        const phraseBook = parsePhraseBook(code,snap.val().source);
+                        //result = generateString(phraseBook);
+                    });
+                }
+            else{
+                const phraseBook = parsePhraseBook(code,false);
+                result = generateString(phraseBook);
+            }
         } catch (e) {
             console.error(e);
             result = e.stack;
@@ -164,10 +174,19 @@ class Editor extends Component {
     generate(parse=true) {
         try {
             if (parse) {
-                this.phraseBook = parsePhraseBook(this.state.source);
+                if(checkImport(this.state.source)){
+                    firebase.database().ref(`sketch/${checkImport(this.state.source)}`).once('value', snap => {
+                        this.phraseBook = parsePhraseBook(this.state.source,snap.val().source);
+                        //const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
+                        //this.setState({ result: result, debugOutput: '' });
+                    });
+                }
+                else {
+                    this.phraseBook = parsePhraseBook(this.state.source,false);
+                    const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
+                    this.setState({ result: result, debugOutput: '' });
+                }
             }
-            const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
-            this.setState({ result: result, debugOutput: '' });
         } catch (e) {
             this.setState({ debugOutput: e.message });
         }

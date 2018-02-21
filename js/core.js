@@ -123,6 +123,7 @@ const WHITESPACE = '  \t'; // todo: add more to these
 const PREAMBLE_RE = /^\s*(\w+)\s*:\s*(.+)*$/;
 const POS_INTEGER_RE = /^\d+$/;
 const DURATION_RE = /^(\d+(\.\d+)?)\s*(s|ms)?$/;
+const IMPORT_RE = /^(\w+)\s*\"(.+)*\"\s*(as)\s*(\w+)$/;
 
 const PREAMBLE_KEYS = ['depth', 'duration', 'animation', 'script'];
 const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
@@ -1056,9 +1057,39 @@ function parsePreamble(preamble, key, value, lineno) {
     }
 }
 
-function parsePhraseBook(s) {
+function parseImport(preamble, sketchKey, refName, importcode){
+    preamble["sketchKey"] = sketchKey;
+    return parsePhraseBook(importcode, false);
+    // let s = "root:\n- Kunal boi";
+    // return parsePhraseBook(s);
+}
+
+function checkImport(code){
+    const lines = code.split('\n');
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmedLine = line.trim();
+
+        if (trimmedLine[0] === '#') {
+            let postHash = line.slice(1).match(IMPORT_RE);
+            if(postHash){
+                return postHash[2];
+            }
+            // else if(trimmedLine.length !== 0){
+            //     throw new Error(`Line ${ i+1 }: expecting '#import "sketch key" as reference-name'`);
+            // }
+            else return false;
+        }
+    }
+}
+
+function parsePhraseBook(s,importcode) {
     const preamble = {};
     const phrases = [];
+    const phraseBook = {};
+    const imported = {};
+
     let currentPhrase;
     const lines = s.split('\n');
     for (let i = 0; i < lines.length; i++) {
@@ -1077,11 +1108,29 @@ function parsePhraseBook(s) {
             const lastPhrase = currentPhrase.values[lastIndex];
             console.assert(typeof lastPhrase === 'string');
             currentPhrase.values[lastIndex] = lastPhrase + line.substring(2);
-        } else if (trimmedLine[0] === '#') {
+        } 
+        else if(importcode){
+            currentPhrase = undefined;
+            let postHash = line.slice(1).match(IMPORT_RE);
+            if(postHash){
+                let x = parseImport(preamble, postHash[2], postHash[4], importcode);
+                for(let key in x){
+                    imported[key] = x[key];
+                    phraseBook[key] = x[key];
+                }
+                console.log(imported);
+            }
+            else if(trimmedLine.length !== 0){
+                //throw new Error(`Line ${ i+1 }: expecting '#import "sketch key" as reference-name'`);
+            } 
+            continue;
+        }
+        else if (trimmedLine[0] === '#') {
             // Ignore comments
             currentPhrase = undefined;
             continue;
-        } else if (trimmedLine.length === 0) {
+        }
+         else if (trimmedLine.length === 0) {
             // Ignore empty lines
             currentPhrase = undefined;
             continue;
@@ -1092,7 +1141,7 @@ function parsePhraseBook(s) {
             if (m) {
                 parsePreamble(preamble, m[1], m[2], i + 1);
             } else if (trimmedLine.length !== 0) {
-                throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
+                // throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
             }
             continue;
         } else if (line.startsWith('- ')) {
@@ -1111,7 +1160,7 @@ function parsePhraseBook(s) {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
         }
     }
-    const phraseBook = {};
+    
     for (let phrase of phrases) {
         phraseBook[phrase.key] = phrase.values.map(text => ({text, tree: parsePhrase(text)}));
         if (phrase.parameters) {
