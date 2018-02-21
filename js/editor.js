@@ -309,7 +309,7 @@ class Editor extends Component {
         let localVersionDiv;
         if (this.state.origSource) {
             localVersionDiv = h('div', { className: 'localversion' },
-                'We\'re showing the changed version you made of this sketch. ',
+                'You\'ve previously made some changes to this sketch. ',
                 h('a', {class: 'underline', href: '#', onClick: this.restoreOriginalVersion.bind(this) }, 'Restore original version.'));
         }
         return h('div', { className: 'editor' }, localVersionDiv,
