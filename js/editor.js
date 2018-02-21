@@ -190,7 +190,7 @@ class Editor extends Component {
                 const sketch = Object.assign({ key: this.props.id }, snap.val());
                 let newState = { loading: false, source: sketch.source };
                 localSource = window.localStorage.getItem(this.props.id);
-                if (localSource !== null && localSource !== undefined) {
+                if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
                     newState.origSource = sketch.source;
                     newState.source = localSource;
                 }
@@ -300,6 +300,7 @@ class Editor extends Component {
             this.setState({ source: this.state.origSource, origSource: undefined });
             this.props.onSourceChanged(this.state.origSource, true);
             window.localStorage.removeItem(this.props.id || 'empty');
+            this.generate();
         }
     }
 
