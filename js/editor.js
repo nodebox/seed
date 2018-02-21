@@ -296,9 +296,11 @@ class Editor extends Component {
     }
 
     restoreOriginalVersion() {
-        this.setState({ source: this.state.origSource, origSource: undefined });
-        this.props.onSourceChanged(this.state.origSource, true);
-        window.localStorage.removeItem(this.props.id || 'empty');
+        if (confirm('Are you sure you want to restore to the original version? This will discard your changes.')) {
+            this.setState({ source: this.state.origSource, origSource: undefined });
+            this.props.onSourceChanged(this.state.origSource, true);
+            window.localStorage.removeItem(this.props.id || 'empty');
+        }
     }
 
     render(props, state) {
@@ -306,7 +308,7 @@ class Editor extends Component {
         const source = state.loading ? 'Loading...' : state.source;
         let localVersionDiv;
         if (this.state.origSource) {
-            localVersionDiv = h('div', { className: 'localversion'}, 
+            localVersionDiv = h('div', { className: 'localversion' },
                 'Warning! You are currently viewing a previously modified version of this sketch.',
                 h('button', {class: 'button', onClick: this.restoreOriginalVersion.bind(this) }, 'Restore original version'));
         }
