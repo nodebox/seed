@@ -1,6 +1,9 @@
 const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
+const REST_URL_temp = 'https://seed-trial.firebaseio.com/user.json';
+const REST_URL = 'https://emrg-pcg.firebaseio.com/';
+
 function debounce(func, wait) {
     let timeout;
     return function() {
@@ -145,8 +148,7 @@ class LoadSketch {
     }
 
     async download(url) {
-        this.goOnline();
-        return await firebase.database().ref(url).once('value');
+        return await this.restGet(url);
     }
 
     goOnline() {
@@ -161,6 +163,19 @@ class LoadSketch {
             firebase.database().goOffline();
             this.online = false;
         }
+    }
+
+    async restGet(url){
+        let getRequest = new Request(REST_URL+url+'.json');
+        let xyz;
+
+        return await fetch(getRequest,{method:'GET'})
+        .then(function(response){
+            return response.json();
+        })
+        .then(function(json){
+            return json;
+        });
     }
 }
 
@@ -182,7 +197,6 @@ class Editor extends Component {
             if (parse) {
                 const loadSketch = this.state.loadSketch || new LoadSketch();
                 this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
-                loadSketch.goOffline();
             }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
@@ -212,7 +226,7 @@ class Editor extends Component {
             const loadSketch = new LoadSketch();
             this.setState({ loadSketch });
             loadSketch.download(`sketch/${this.props.id}`).then(snap => {
-                const sketch = Object.assign({ key: this.props.id }, snap.val());
+                const sketch = Object.assign({ key: this.props.id }, snap);
                 let newState = { loading: false, source: sketch.source };
                 localSource = window.localStorage.getItem(this.props.id);
                 if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
@@ -416,6 +430,15 @@ class Sketch extends Component {
         }).then(() => {
             firebase.database().goOffline();
         });
+
+        // let saveRequest = new Request(REST_URL_temp);
+        // fetch(saveRequest, {method:'POST',body:'{}'})
+        // .then(function(response){
+        //     this.setState({ saving: false, unsaved: false });
+        //     window.localStorage.removeItem(this.props.id || 'empty');
+        //     route(`/sketch/${ref.key}`);
+        //     console.log(response);
+        // });
     }
 
     render(props, state) {
@@ -516,7 +539,6 @@ class Docs extends Component {
                     .catch(err => { codeResult.innerHTML = err; });
                 }
             }
-            loadSketch.goOffline();
         }
     }
 }

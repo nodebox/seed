@@ -1145,7 +1145,7 @@ async function parsePhraseBook(s, loadSketch) {
             sketch = importedSketches[o.name];
         } else {
             let snap = await loadSketch.download(`sketch/${o.name}`);
-            sketch = Object.assign({}, snap.val());
+            sketch = Object.assign({}, snap);
             if (sketch.source === undefined) {
                 throw new Error(`Line ${ o.line }: Could not import sketch named "${o.name}".`)
             }
