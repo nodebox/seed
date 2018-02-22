@@ -139,6 +139,31 @@ class Home extends Component {
     }
 }
 
+class LoadSketch {
+    constructor() {
+        this.online = false;
+    }
+
+    async download(url) {
+        this.goOnline();
+        return await firebase.database().ref(url).once('value');
+    }
+
+    goOnline() {
+        if (!this.online) {
+            firebase.database().goOnline();
+            this.online = true;
+        }
+    }
+
+    goOffline() {
+        if (this.online) {
+            firebase.database().goOffline();
+            this.online = false;
+        }
+    }
+}
+
 class Editor extends Component {
     constructor(props) {
         super(props);
@@ -155,7 +180,9 @@ class Editor extends Component {
     async generate(parse=true) {
         try {
             if (parse) {
-                this.phraseBook = await parsePhraseBook(this.state.source);
+                const loadSketch = this.state.loadSketch || new LoadSketch();
+                this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
+                loadSketch.goOffline();
             }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
@@ -182,9 +209,9 @@ class Editor extends Component {
             }
             this.generate();
         } else {
-            firebase.database().goOnline();
-            firebase.database().ref(`sketch/${this.props.id}`).once('value', snap => {
-                firebase.database().goOffline();
+            const loadSketch = new LoadSketch();
+            this.setState({ loadSketch });
+            loadSketch.download(`sketch/${this.props.id}`).then(snap => {
                 const sketch = Object.assign({ key: this.props.id }, snap.val());
                 let newState = { loading: false, source: sketch.source };
                 localSource = window.localStorage.getItem(this.props.id);
@@ -419,7 +446,7 @@ class Embed extends Component {
 class Docs extends Component {
     constructor(props) {
         super(props);
-        this.state = { page: undefined, html: 'Loading...' };
+        this.state = { page: undefined, html: 'Loading...', loadSketch: new LoadSketch() };
     }
 
     render(props) {
@@ -477,17 +504,19 @@ class Docs extends Component {
         this.onPage();
         if (window.location.pathname.split('/')[1] === 'docs') {
             let cw = document.getElementsByClassName('code-wrap');
+            const loadSketch = this.state.loadSketch;
             for (let i = 0; i < cw.length; i += 1) {
                 let el = cw[i];
                 let code = el.getElementsByTagName('code')[0];
                 let codeResult = el.getElementsByClassName('code-result')[0];
                 if (code !== undefined && codeResult !== undefined) {
-                    parsePhraseBook(code.textContent)
+                    parsePhraseBook(code.textContent, loadSketch)
                     .then(phraseBook => generateString(phraseBook))
                     .then(result => { codeResult.innerHTML = result; })
                     .catch(err => { codeResult.innerHTML = err; });
                 }
             }
+            loadSketch.goOffline();
         }
     }
 }
