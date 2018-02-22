@@ -286,6 +286,10 @@ class Editor extends Component {
         }
     }
 
+    onEditorFocus(){
+        if(this.state.playing) this.onTogglePlay();
+    }
+
     durationSeconds() {
         const duration = this.phraseBook['%preamble'].duration;
         if (duration !== undefined) { return duration; }
@@ -345,7 +349,7 @@ class Editor extends Component {
                     h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
                 ),
                 h('div', { className: 'editor__source' },
-                    h('textarea', { className: 'editor__area', value: source, onInput: this.onInput.bind(this), readonly: state.loading }),
+                    h('textarea', { className: 'editor__area', value: source, onInput: this.onInput.bind(this),onClick:this.onEditorFocus.bind(this), readonly: state.loading }),
                         debugView
                 ),
             ),
