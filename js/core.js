@@ -77,6 +77,7 @@ RegExp.escape = function(s) {
 };
 
 function getURLParameter(name, url) {
+    if (typeof window === 'undefined') { return false; }
     if (!url) { url = window.location.search; }
     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
         results = regex.exec(url);
@@ -1115,7 +1116,7 @@ async function parsePhraseBook(s, loadSketch) {
             m = line.slice(1).match(PREAMBLE_RE);
             if (m) {
                 parsePreamble(preamble, m[1], m[2], i + 1);
-            } 
+            }
             else if (trimmedLine.length !== 0) {
                 throw new Error(`Line ${ i + 1}: expecting '% value: property' for the preamble.`);
             }
