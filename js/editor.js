@@ -173,11 +173,19 @@ class Source extends Component {
         };
         this.codeMirror = CodeMirror.fromTextArea(this.textAreaRef, options);
         this.codeMirror.on('change', this.onChanged.bind(this));
+        //this.codeMirror.setSize('50%', '100%');
     }
 
     componentWillUnmount() {
         if (this.codeMirror) {
             this.codeMirror.toTextArea();
+        }
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if (!this.codeMirror) return;
+        if (this.codeMirror.getValue() !== nextProps.source) {
+            this.codeMirror.setValue(nextProps.source);
         }
     }
 
