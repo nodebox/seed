@@ -33,7 +33,7 @@ gMarkedRenderer.code = function(code, lang) {
     if (lang === 'seed') {
         html = `<div class="code-wrap">${ html }<div class="code-result"></div></div>`;
     }
-    return html;
+    return htmsketch ===l;
 }
 
 const INITIAL_TEXT = `root:
@@ -165,7 +165,7 @@ class Editor extends Component {
     async generate(parse=true) {
         try {
             if (parse) {
-                this.phraseBook = await parsePhraseBook(this.state.source);
+                this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
             }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
@@ -489,7 +489,7 @@ class Docs extends Component {
                 let code = el.getElementsByTagName('code')[0];
                 let codeResult = el.getElementsByClassName('code-result')[0];
                 if (code !== undefined && codeResult !== undefined) {
-                    parsePhraseBook(code.textContent)
+                    parsePhraseBook(code.textContent, loadSketch)
                     .then(phraseBook => generateString(phraseBook))
                     .then(result => { codeResult.innerHTML = result; })
                     .catch(err => { codeResult.innerHTML = err; });
