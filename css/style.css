@@ -370,12 +370,29 @@ a.underline {
     width: 100%;
     height: 100%;
     color: inherit;
-    font-family: "SF Mono", Menlo, monospace;
     background: none;
     outline: none;
     border: none;
-    padding: 10px;
     flex: 1;
+}
+
+.editor__area .CodeMirror {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 11px;
+}
+
+.editor__area .CodeMirror-gutters {
+    background-color: transparent;
+    border-right: 1px solid #eee;
+    padding-right: 5px;
+}
+
+.editor__area .CodeMirror-linenumber {
+    color: #ccc;
+}
+
+.editor__area .CodeMirror pre {
+    padding: 0 8px;
 }
 
 .editor__viewer {

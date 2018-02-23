@@ -164,6 +164,40 @@ class LoadSketch {
     }
 }
 
+class Source extends Component {
+    componentDidMount() {
+        const options = {
+            value: this.props.source,
+            indentUnit: 2,
+            lineNumbers: true,
+        };
+        this.codeMirror = CodeMirror.fromTextArea(this.textAreaRef, options);
+        this.codeMirror.on('change', this.onChanged.bind(this));
+    }
+
+    componentWillUnmount() {
+        if (this.codeMirror) {
+            this.codeMirror.toTextArea();
+        }
+    }
+
+    onChanged(doc, change) {
+        if (change.origin === 'setValue') return;
+        this.props.onSourceChanged(doc.getValue());
+    }
+
+    onInput(e) {
+        const source = e.target.value;
+        this.props.onSourceChanged(source);
+    }
+
+    render(props) {
+        return h('div', { className: 'editor__area' },
+            h('textarea', { ref: ref => (this.textAreaRef = ref), className: 'editor__source', value: this.props.source, onInput: this.onInput.bind(this), readonly: this.props.loading }),
+        );
+    }
+}
+
 class Editor extends Component {
     constructor(props) {
         super(props);
@@ -244,8 +278,7 @@ class Editor extends Component {
         document.querySelector('html').classList.remove('fullscreen');
     }
 
-    onInput(e) {
-        const source = e.target.value;
+    onSourceChanged(source) {
         this.setState({ source });
         if (this.props.onSourceChanged) {
             this.props.onSourceChanged(source);
@@ -345,8 +378,8 @@ class Editor extends Component {
                     h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
                 ),
                 h('div', { className: 'editor__source' },
-                    h('textarea', { className: 'editor__area', value: source, onInput: this.onInput.bind(this), readonly: state.loading }),
-                        debugView
+                    h(Source, { source, loading: this.state.loading, onSourceChanged: this.onSourceChanged.bind(this) }),
+                    debugView
                 ),
             ),
             h('div', { className: 'editor__viewer-wrap'},
