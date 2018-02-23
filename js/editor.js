@@ -1,8 +1,8 @@
 const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
-const REST_URL_temp = 'https://seed-trial.firebaseio.com/user.json';
-const REST_URL = 'https://emrg-pcg.firebaseio.com/';
+const BASE_REST_URL = 'https://emrg-pcg.firebaseio.com/';
+const SKETCH_REST_URL = 'https://emrg-pcg.firebaseio.com/sketch/';
 
 function debounce(func, wait) {
     let timeout;
@@ -142,41 +142,11 @@ class Home extends Component {
     }
 }
 
-class LoadSketch {
-    constructor() {
-        this.online = false;
-    }
-
-    async download(url) {
-        return await this.restGet(url);
-    }
-
-    goOnline() {
-        if (!this.online) {
-            firebase.database().goOnline();
-            this.online = true;
-        }
-    }
-
-    goOffline() {
-        if (this.online) {
-            firebase.database().goOffline();
-            this.online = false;
-        }
-    }
-
-    async restGet(url){
-        let getRequest = new Request(REST_URL+url+'.json');
-        let xyz;
-
-        return await fetch(getRequest,{method:'GET'})
-        .then(function(response){
-            return response.json();
-        })
-        .then(function(json){
-            return json;
-        });
-    }
+async function loadSketch(url){
+        let getRequest = new Request(SKETCH_REST_URL+url+'.json');
+        const res = await fetch(getRequest,{method:'GET'});
+        const json = await res.json();
+        return json;
 }
 
 class Editor extends Component {
@@ -195,8 +165,7 @@ class Editor extends Component {
     async generate(parse=true) {
         try {
             if (parse) {
-                const loadSketch = this.state.loadSketch || new LoadSketch();
-                this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
+                this.phraseBook = await parsePhraseBook(this.state.source);
             }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
@@ -205,7 +174,7 @@ class Editor extends Component {
         }
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         document.querySelector('html').classList.add('fullscreen');
         let localSource;
         if (!this.props.id) {
@@ -223,34 +192,31 @@ class Editor extends Component {
             }
             this.generate();
         } else {
-            const loadSketch = new LoadSketch();
-            this.setState({ loadSketch });
-            loadSketch.download(`sketch/${this.props.id}`).then(snap => {
-                const sketch = Object.assign({ key: this.props.id }, snap);
-                let newState = { loading: false, source: sketch.source };
-                localSource = window.localStorage.getItem(this.props.id);
-                if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
-                    newState.origSource = sketch.source;
-                    newState.source = localSource;
-                }
-                const urlSeed = getURLParameter('seed');
-                if (urlSeed) {
-                    newState.seed = urlSeed;
-                } else if (sketch.seed) {
-                    newState.seed = sketch.seed;
-                } else {
-                    newState.seed = this.state.seed;
-                }
+            const json = await loadSketch(this.props.id);
+            const sketch = Object.assign({ key: this.props.id }, json);
+            let newState = { loading: false, source: sketch.source };
+            localSource = window.localStorage.getItem(this.props.id);
+            if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
+                newState.origSource = sketch.source;
+                newState.source = localSource;
+            }
+            const urlSeed = getURLParameter('seed');
+            if (urlSeed) {
+                newState.seed = urlSeed;
+            } else if (sketch.seed) {
+                newState.seed = sketch.seed;
+            } else {
+                newState.seed = this.state.seed;
+            }
 
-                this.setState(newState);
-                if (this.props.onSourceChanged) {
-                    this.props.onSourceChanged(newState.source, true, localSource !== null && localSource !== undefined);
-                }
-                if (this.props.onSeedChanged) {
-                    this.props.onSeedChanged(newState.seed, true);
-                }
-                this.generate();
-            });
+            this.setState(newState);
+            if (this.props.onSourceChanged) {
+                this.props.onSourceChanged(newState.source, true, localSource !== null && localSource !== undefined);
+            }
+            if (this.props.onSeedChanged) {
+                this.props.onSeedChanged(newState.seed, true);
+            }
+            this.generate();
         }
     }
 
@@ -430,15 +396,6 @@ class Sketch extends Component {
         }).then(() => {
             firebase.database().goOffline();
         });
-
-        // let saveRequest = new Request(REST_URL_temp);
-        // fetch(saveRequest, {method:'POST',body:'{}'})
-        // .then(function(response){
-        //     this.setState({ saving: false, unsaved: false });
-        //     window.localStorage.removeItem(this.props.id || 'empty');
-        //     route(`/sketch/${ref.key}`);
-        //     console.log(response);
-        // });
     }
 
     render(props, state) {
@@ -469,7 +426,7 @@ class Embed extends Component {
 class Docs extends Component {
     constructor(props) {
         super(props);
-        this.state = { page: undefined, html: 'Loading...', loadSketch: new LoadSketch() };
+        this.state = { page: undefined, html: 'Loading...' };
     }
 
     render(props) {
@@ -527,13 +484,12 @@ class Docs extends Component {
         this.onPage();
         if (window.location.pathname.split('/')[1] === 'docs') {
             let cw = document.getElementsByClassName('code-wrap');
-            const loadSketch = this.state.loadSketch;
             for (let i = 0; i < cw.length; i += 1) {
                 let el = cw[i];
                 let code = el.getElementsByTagName('code')[0];
                 let codeResult = el.getElementsByClassName('code-result')[0];
                 if (code !== undefined && codeResult !== undefined) {
-                    parsePhraseBook(code.textContent, loadSketch)
+                    parsePhraseBook(code.textContent)
                     .then(phraseBook => generateString(phraseBook))
                     .then(result => { codeResult.innerHTML = result; })
                     .catch(err => { codeResult.innerHTML = err; });

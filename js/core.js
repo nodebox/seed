@@ -1069,7 +1069,7 @@ function parsePreamble(preamble, key, value, lineno) {
 
 const importedSketches = {};
 
-async function parsePhraseBook(s, loadSketch) {
+async function parsePhraseBook(s) {
     const importSketches = [];
     const preamble = {};
     const phrases = [];
@@ -1144,14 +1144,13 @@ async function parsePhraseBook(s, loadSketch) {
         if (importedSketches[o.name]) {
             sketch = importedSketches[o.name];
         } else {
-            let snap = await loadSketch.download(`sketch/${o.name}`);
-            sketch = Object.assign({}, snap);
-            if (sketch.source === undefined) {
+            sketch = await loadSketch(o.name);
+            if (sketch === null) {
                 throw new Error(`Line ${ o.line }: Could not import sketch named "${o.name}".`)
             }
             importedSketches[o.name] = sketch;
         }
-        let pb = await parsePhraseBook(sketch.source, loadSketch);
+        let pb = await parsePhraseBook(sketch.source);
         imports[o.alias] = pb;
     }
     const phraseBook = {};
