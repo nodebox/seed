@@ -356,6 +356,7 @@ a.underline {
 }
 
 .editor__source {
+    height: 100%;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -363,7 +364,7 @@ a.underline {
 
 .editor__debug {
     font-family: "SF Mono", Menlo, monospace;
-    padding: 10px;
+    padding: 0 10px;
 }
 
 .editor__area {
@@ -382,7 +383,7 @@ a.underline {
 }
 
 .editor__area .CodeMirror-gutters {
-    background-color: transparent;
+    background-color: var(--white);
     border-right: 1px solid #eee;
     padding-right: 5px;
 }
