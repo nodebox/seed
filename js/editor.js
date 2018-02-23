@@ -165,13 +165,36 @@ class LoadSketch {
 }
 
 class Source extends Component {
+    componentDidMount() {
+        const options = {
+            value: this.props.source,
+            indentUnit: 2,
+            lineNumbers: true,
+        };
+        this.codeMirror = CodeMirror.fromTextArea(this.textAreaRef, options);
+        this.codeMirror.on('change', this.onChanged.bind(this));
+    }
+
+    componentWillUnmount() {
+        if (this.codeMirror) {
+            this.codeMirror.toTextArea();
+        }
+    }
+
+    onChanged(doc, change) {
+        if (change.origin === 'setValue') return;
+        this.props.onSourceChanged(doc.getValue());
+    }
+
     onInput(e) {
         const source = e.target.value;
         this.props.onSourceChanged(source);
     }
 
     render(props) {
-        return h('textarea', { className: 'editor__area', value: this.props.source, onInput: this.onInput.bind(this), readonly: this.props.loading });
+        return h('div', { className: 'editor__area' },
+            h('textarea', { ref: ref => (this.textAreaRef = ref), className: 'editor__source', value: this.props.source, onInput: this.onInput.bind(this), readonly: this.props.loading }),
+        );
     }
 }
 
