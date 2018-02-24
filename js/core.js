@@ -167,18 +167,11 @@ class Lexer {
         this.text = text;
         this.pos = 0;
         this.currentChar = text.length > 0 ? text[this.pos] : null;
-        this.insideRef = false;
     }
 
     error(char) {
         const s = char.length > 1 ? 's' : '';
         throw new Error(`Invalid character${s} ${char} at position ${this.pos} in phrase '${this.text}'.`);
-    }
-
-    skipWhitespace() {
-        while (WHITESPACE.indexOf(this.currentChar) !== -1) {
-            this.advance();
-        }
     }
 
     advance() {
@@ -199,12 +192,29 @@ class Lexer {
         }
     }
 
+    skipWhitespace() {
+        while (WHITESPACE.indexOf(this.currentChar) !== -1) {
+            this.advance();
+        }
+    }
+
     checkCurrentNextChars(chars) {
         return this.currentChar === chars[0] && this.peek() === chars[1];
     }
 
     checkEscapeChar(char) {
         return this.currentChar === '\\' && this.peek() === char;
+    }
+
+    nextToken() {
+        throw new Error('Cannot call Lexer this way. Did you forget to subclass it?');
+    }
+}
+
+class PhraseLexer extends Lexer {
+    constructor(text) {
+        super(text);
+        this.insideRef = false;
     }
 
     _string(terminator) {
@@ -442,6 +452,21 @@ class Lexer {
 }
 
 class DefLexer extends Lexer {
+    _key() {
+        let result = '';
+        if (DIGITS.indexOf(this.currentChar) !== -1) {
+            this.error(this.currentChar);
+        }
+        while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+            if (this.checkCurrentNextChars('..')) {
+                break;
+            }
+            result += this.currentChar;
+            this.advance();
+        }
+        return new Token(KEY, result);
+    }
+
     nextToken() {
         let result = '';
         while (this.currentChar !== null) {
@@ -997,7 +1022,7 @@ class Interpreter {
 }
 
 function parsePhrase(phrase) {
-    const lexer = new Lexer(phrase);
+    const lexer = new PhraseLexer(phrase);
     const parser = new Parser(lexer);
     const tree = parser.parse();
     return tree;
