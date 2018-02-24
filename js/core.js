@@ -1172,10 +1172,8 @@ async function parsePhraseBook(s, loadSketch) {
                 }
             }
         }
-        else if(x.type === "Ref"){
-            if(references.indexOf(x.node.key) === -1){
-                references[references.length] = x.node.key;
-            }
+        else if(x.type === "Ref" && x.node.type === "Key" && references.indexOf(x.node.key) === -1){
+            references[references.length] = x.node.key;
         }
     }
     for(k in phraseBook){
@@ -1194,7 +1192,6 @@ async function parsePhraseBook(s, loadSketch) {
             throw new Error(`Cannot find reference to ${item}`);
         }
     });
-
     phraseBook['%preamble'] = preamble;
     phraseBook['%imports'] = imports;
     return phraseBook;
