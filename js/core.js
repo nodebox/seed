@@ -1143,7 +1143,7 @@ async function parsePhraseBook(s, loadSketch) {
         let o = importSketches[i];
         let sketch;
         if (importedSketches[o.name]) {
-            sketch = importedSketches[o.name];
+            sketch = importedSketches[o.name]; console.log(item);
         } else {
             let snap = await loadSketch.download(`sketch/${o.name}`);
             sketch = Object.assign({}, snap.val());
@@ -1162,6 +1162,36 @@ async function parsePhraseBook(s, loadSketch) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
     }
+
+    let references = [];
+    function traverse(x){
+        if(x.type === "Concat"){
+            for(key in x){
+                if(x[key].type){
+                    traverse(x[key]);
+                }
+            }
+        }
+        else if(x.type === "Ref"){
+            if(references.indexOf(x.node.key) === -1){
+                references[references.length] = x.node.key;
+            }
+        }
+    }
+    phrases.forEach(function(item){
+        if(item.key === "root"){
+            item.values.forEach(function(i){
+                let p = parsePhrase(i);
+                traverse(p);
+            });
+        }
+    });
+    references.forEach(function(item){
+        if(!phraseBook[item]){
+            throw new Error(`Cannot find reference to ${item}`);
+        }
+    });
+
     phraseBook['%preamble'] = preamble;
     phraseBook['%imports'] = imports;
     return phraseBook;
