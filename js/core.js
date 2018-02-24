@@ -1178,13 +1178,13 @@ async function parsePhraseBook(s, loadSketch) {
             }
         }
     }
-    for(key in phraseBook){
-        phraseBook[key].forEach(function(item){
+    for(k in phraseBook){
+        phraseBook[k].forEach(function(item){
             traverse(item.tree);
         });
-        definedRef[definedRef.length] = key;
-        if(phraseBook[key].parameters){
-            phraseBook[key].parameters.forEach(function(item){
+        definedRef[definedRef.length] = k;
+        if(phraseBook[k].parameters){
+            phraseBook[k].parameters.forEach(function(item){
                 if(definedRef.indexOf(item) === -1) definedRef[definedRef.length] = item;
             });
         }
