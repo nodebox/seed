@@ -1162,8 +1162,8 @@ async function parsePhraseBook(s, loadSketch) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
     }
-
     let references = [];
+    let definedRef = [];
     function traverse(x){
         if(x.type === "Concat"){
             for(key in x){
@@ -1178,16 +1178,19 @@ async function parsePhraseBook(s, loadSketch) {
             }
         }
     }
-    phrases.forEach(function(item){
-        if(item.key === "root"){
-            item.values.forEach(function(i){
-                let p = parsePhrase(i);
-                traverse(p);
+    for(key in phraseBook){
+        phraseBook[key].forEach(function(item){
+            traverse(item.tree);
+        });
+        definedRef[definedRef.length] = key;
+        if(phraseBook[key].parameters){
+            phraseBook[key].parameters.forEach(function(item){
+                if(definedRef.indexOf(item) === -1) definedRef[definedRef.length] = item;
             });
         }
-    });
+    }
     references.forEach(function(item){
-        if(!phraseBook[item]){
+        if(definedRef.indexOf(item) === -1){
             throw new Error(`Cannot find reference to ${item}`);
         }
     });
