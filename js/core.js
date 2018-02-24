@@ -529,8 +529,8 @@ class Parser {
         this.currentToken = this.lexer.nextToken();
     }
 
-    error(tokenType) {
-        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+    error() {
+        throw new Error('Cannot call Parser this way. Did you forget to subclass it?');
     }
 
     consume(tokenType) {
@@ -539,6 +539,16 @@ class Parser {
         } else {
             this.error(tokenType);
         }
+    }
+
+    parse() {
+        throw new Error('Cannot call Parser this way. Did you forget to subclass it?');
+    }
+}
+
+class PhraseParser extends Parser {
+    error(tokenType) {
+        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
     }
 
     _filters(node) {
@@ -727,8 +737,8 @@ class Parser {
 }
 
 class DefParser extends Parser {
-    constructor(text) {
-        super(new DefLexer(text));
+    error(tokenType) {
+        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
     }
 
     _key() {
@@ -1023,7 +1033,7 @@ class Interpreter {
 
 function parsePhrase(phrase) {
     const lexer = new PhraseLexer(phrase);
-    const parser = new Parser(lexer);
+    const parser = new PhraseParser(lexer);
     const tree = parser.parse();
     return tree;
 }
@@ -1154,7 +1164,7 @@ async function parsePhraseBook(s, loadSketch) {
             currentPhrase.values.push(line.substring(2));
         } else if (trimmedLine.endsWith(':')) {
             // Keys end with ":"
-            let parser = new DefParser(trimmedLine);
+            let parser = new DefParser(new DefLexer(trimmedLine));
             currentPhrase = parser.parse();
             currentPhrase.values = [];
             phrases.push(currentPhrase);
