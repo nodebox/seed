@@ -940,11 +940,30 @@ class Interpreter {
     }
 
     visitNamedKey(node) {
-        const name = `${node.key}:${node.name}`;
-        if (!this.globalMemory[name]) {
-            this.globalMemory[name] = this.visitKey(node);
-        }
-        return this.globalMemory[name];
+        switch(node.name){
+            case 'one': 
+                const name = `${node.key}:${node.name}`;
+                if (!this.globalMemory[name]) {
+                    this.globalMemory[name] = this.visitKey(node);
+                }
+                return this.globalMemory[name];
+                break;
+
+            case 'site': 
+                let randomOrder = [3,4,2,5,0,1,6];//will be randomized
+                let nodeKey = this.phraseBook[node.key];
+                let counter = nodeKey.count;
+        
+                if(counter == (randomOrder.length-1)) nodeKey.count = 0;
+                else nodeKey.count += 1;
+        
+                return nodeKey[randomOrder[counter]].text;
+                break;
+
+            default:
+                throw new Error(`Cannot find ${node.name} name`);
+                break;            
+        }        
     }
 
     visitRepeatFilter(node) {
@@ -1197,6 +1216,12 @@ async function parsePhraseBook(s, loadSketch) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
     }
+
+    //to help keep track of how many times has a reference been referred to
+    for(k in phraseBook){
+        phraseBook[k].count = 0;
+    }
+    
     phraseBook['%preamble'] = preamble;
     phraseBook['%imports'] = imports;
     return phraseBook;
