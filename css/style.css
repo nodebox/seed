@@ -385,6 +385,7 @@ a.underline {
 .editor__area .CodeMirror {
     font-family: "SF Mono", Menlo, monospace;
     font-size: 11px;
+    height: 100%;
 }
 
 .editor__area .CodeMirror-gutters {
