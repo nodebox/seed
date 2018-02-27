@@ -434,7 +434,7 @@ class PhraseLexer extends Lexer {
             } else if (this.checkEscapeChar('}')) {
                 result += '}';
                 this.advance();
-                this.advance();
+                this.advance();line
             } else {
                 result += this.currentChar;
                 this.advance();
@@ -524,8 +524,9 @@ class Node {
 }
 
 class Parser {
-    constructor(lexer) {
+    constructor(lexer, lineno) {
         this.lexer = lexer;
+        this.lineno = lineno;
         this.currentToken = this.lexer.nextToken();
     }
 
@@ -643,6 +644,10 @@ class PhraseParser extends Parser {
             node = new Node(NODE_STRING, { value: token.value });
         } else if (token.type === KEY) {
             this.consume(KEY);
+            if(this.currentToken.type === KEY){
+                throw new Error(`Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
+            }
+
             node = new Node(NODE_KEY, { key: token.value });
             node = this._name(node);
             node = this._parameters(node);
@@ -728,11 +733,16 @@ class PhraseParser extends Parser {
     }
 
     parse() {
-        const node = this.phrase();
-        if (this.currentToken.type !== EOF) {
-            this.error(EOF);
+        try{
+            const node = this.phrase();
+            if (this.currentToken.type !== EOF) {
+                this.error(EOF);
+            }
+            return node;
         }
-        return node;
+        catch(e){
+            throw new Error(`Line ${this.lineno}: ${e.message}`);
+        }
     }
 }
 
@@ -744,6 +754,10 @@ class DefParser extends Parser {
     _key() {
         let key = this.currentToken.value;
         this.consume(KEY);
+        if(this.currentToken.type === KEY){
+            throw new Error(`Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
+        }
+        
         return key;
     }
 
@@ -771,16 +785,21 @@ class DefParser extends Parser {
     }
 
     parse() {
-        const key = this._key();
-        const parameters = this._parameters();
-        this.consume(COLON);
-        if (this.currentToken.type !== EOF) {
-            this.error(EOF);
+        try{
+            const key = this._key();
+            const parameters = this._parameters();
+            this.consume(COLON);
+            if (this.currentToken.type !== EOF) {
+                this.error(EOF);
+            }
+            if (parameters.length === 0) {
+                return {key};
+            } else {
+                return {key, parameters};
+            }
         }
-        if (parameters.length === 0) {
-            return {key};
-        } else {
-            return {key, parameters};
+        catch(e){
+            throw new Error(`Line ${this.lineno}: ${e.message}`);
         }
     }
 }
@@ -1027,13 +1046,18 @@ class Interpreter {
     }
 
     interpret() {
-        return this.visit(this.phrase.tree);
+        try{
+            return this.visit(this.phrase.tree);
+        }
+        catch(e){
+            throw new Error(`Line ${this.phrase.lineno}: ${e.message}`)
+        }
     }
 }
 
-function parsePhrase(phrase) {
+function parsePhrase(phrase, lineno) {
     const lexer = new PhraseLexer(phrase);
-    const parser = new PhraseParser(lexer);
+    const parser = new PhraseParser(lexer, lineno);
     const tree = parser.parse();
     return tree;
 }
@@ -1162,11 +1186,14 @@ async function parsePhraseBook(s, loadSketch) {
                 throw new Error(`Line ${ i + 1 }: line without a key.`);
             }
             currentPhrase.values.push(line.substring(2));
+            currentPhrase.lines.push(i+1);
         } else if (trimmedLine.endsWith(':')) {
             // Keys end with ":"
-            let parser = new DefParser(new DefLexer(trimmedLine));
+            let parser = new DefParser(new DefLexer(trimmedLine), (i+1));
             currentPhrase = parser.parse();
             currentPhrase.values = [];
+            currentPhrase.lines = [];
+            currentPhrase.lineno = i+1;
             phrases.push(currentPhrase);
         } else {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
@@ -1192,7 +1219,8 @@ async function parsePhraseBook(s, loadSketch) {
     }
     const phraseBook = {};
     for (let phrase of phrases) {
-        phraseBook[phrase.key] = phrase.values.map(text => ({text, tree: parsePhrase(text)}));
+        phraseBook[phrase.key] = phrase.values.map((text,index) => ({text, tree: parsePhrase(text,phrase.lines[index]), lineno:phrase.lines[index]}));
+        phraseBook[phrase.key].lineno = phrase.lineno;
         if (phrase.parameters) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
