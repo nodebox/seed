@@ -644,10 +644,9 @@ class PhraseParser extends Parser {
             node = new Node(NODE_STRING, { value: token.value });
         } else if (token.type === KEY) {
             this.consume(KEY);
-            if(this.currentToken.type === KEY){
+            if (this.currentToken.type === KEY) {
                 throw new Error(`Invalid syntax at position ${this.lexer.pos}: Spaces are not allowed as part of identifiers. You could write '${token.value}_${this.currentToken.value}' instead.`);
             }
-
             node = new Node(NODE_KEY, { key: token.value });
             node = this._name(node);
             node = this._parameters(node);
