@@ -364,7 +364,12 @@ a.underline {
 
 .editor__debug {
     font-family: "SF Mono", Menlo, monospace;
-    padding: 0 10px;
+    background: white;
+    padding: 7px 10px;
+    margin-right: 15px;
+    position: relative;
+    bottom: 0;
+    z-index: 10;
 }
 
 .editor__area {

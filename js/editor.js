@@ -370,7 +370,7 @@ class Editor extends Component {
     }
 
     render(props, state) {
-        const debugView = h('p', { className: 'editor__debug' }, this.state.debugOutput);
+        const debugView = h('div', { className: 'editor__debug' }, this.state.debugOutput);
         const source = state.loading ? 'Loading...' : state.source;
         let localVersionDiv;
         if (this.state.origSource) {
@@ -385,9 +385,9 @@ class Editor extends Component {
                     h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
                 ),
                 h('div', { className: 'editor__source' },
-                    h(Source, { source, loading: this.state.loading, onSourceChanged: this.onSourceChanged.bind(this) }),
-                    debugView
+                    h(Source, { source, loading: this.state.loading, onSourceChanged: this.onSourceChanged.bind(this) })
                 ),
+                debugView
             ),
             h('div', { className: 'editor__viewer-wrap'},
                 h('span', { class: 'editor__toolbar' },
