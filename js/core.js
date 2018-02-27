@@ -645,7 +645,7 @@ class PhraseParser extends Parser {
         } else if (token.type === KEY) {
             this.consume(KEY);
             if(this.currentToken.type === KEY){
-                throw new Error(`Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
+                throw new Error(`Invalid syntax at position ${this.lexer.pos}: Spaces are not allowed as part of identifiers. You could write '${token.value}_${this.currentToken.value}' instead.`);
             }
 
             node = new Node(NODE_KEY, { key: token.value });
@@ -753,8 +753,8 @@ class DefParser extends Parser {
     _key() {
         let key = this.currentToken.value;
         this.consume(KEY);
-        if(this.currentToken.type === KEY){
-            throw new Error(`Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
+        if (this.currentToken.type === KEY) {
+            throw new Error(`Invalid syntax at position ${this.lexer.pos}: Spaces are not allowed as part of identifiers. You could write '${key}_${this.currentToken.value}' instead.`);
         }
         return key;
     }
