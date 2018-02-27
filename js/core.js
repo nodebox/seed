@@ -549,13 +549,13 @@ class Parser {
 
 class PhraseParser extends Parser {
     error(tokenType) {
-        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+        throw new Error(`Line ${this.lineno}: Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
     }
 
     _filters(node) {
         while (this.currentToken.type === FILTER) {
             if (this.currentToken.value === '') {
-                throw new Error(`Naming Error. Encountered a filter token (|) at position ${ this.lexer.pos } without a filter name.`);
+                throw new Error(`Line ${this.lineno}: Naming Error. Encountered a filter token (|) at position ${ this.lexer.pos } without a filter name.`);
             }
             node = new Node(NODE_FILTER, { node, name: this.currentToken.value });
             this.consume(FILTER);
@@ -567,13 +567,13 @@ class PhraseParser extends Parser {
     _range(node) {
         if (this.currentToken.type === RANGE) {
             if (node.type === NODE_STRING && node.value.length !== 1) {
-                throw new Error(`Range Error: Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
+                throw new Error(`Line ${this.lineno}: Range Error: Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
             }
             this.consume(RANGE);
             let start = node;
             let end = this.factor(false);
             if (end.type === NODE_STRING && end.value.length !== 1) {
-                throw new Error(`Range Error: Only single character strings can be part of a range. The encountered string '${ end.value }' at position ${ this.lexer.pos } has a length of ${ end.value.length }.`);
+                throw new Error(`Line ${this.lineno}: Range Error: Only single character strings can be part of a range. The encountered string '${ end.value }' at position ${ this.lexer.pos } has a length of ${ end.value.length }.`);
             }
             if (start.type === NODE_KEY && start.key.length === 1 && !start.parameters) {
                 start = new Node(NODE_CHAR, { value: start.key });
@@ -656,11 +656,11 @@ class PhraseParser extends Parser {
             try {
                 node = this.expr();
             } catch (e) {
-                throw new Error(`Error. Empty expression at position ${this.lexer.pos}.`);
+                throw new Error(`Line ${this.lineno}: Error. Empty expression at position ${this.lexer.pos}.`);
             }
             this.consume(RPAREN);
         } else {
-            throw new Error(`Invalid syntax: expected a symbol (an integer, float, string, ...) at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+            throw new Error(`Line ${this.lineno}: Invalid syntax: expected a symbol (an integer, float, string, ...) at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
         }
         if (parseFiltersRange) {
             node = this._filters(node);
@@ -687,7 +687,7 @@ class PhraseParser extends Parser {
         if (this.currentToken.type === REF_END) {
             return new Node(NODE_NO_OP);
         } else if (this.currentToken.type === RPAREN) {
-            throw new Error(`Invalid syntax: Encountered ) symbol at position ${this.lexer.pos} but no ( was seen.`);
+            throw new Error(`Line ${this.lineno}: Invalid syntax: Encountered ) symbol at position ${this.lexer.pos} but no ( was seen.`);
         }
         let node = this.term();
         while (this.currentToken.type === PLUS || this.currentToken.type === MINUS) {
@@ -705,7 +705,7 @@ class PhraseParser extends Parser {
     ref() {
         let node = this.expr();
         if (this.currentToken.type !== REF_END) {
-            throw new Error(`Invalid syntax: expected end of reference at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+            throw new Error(`Line ${this.lineno}: Invalid syntax: expected end of reference at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
         }
         return new Node(NODE_REF, { node });
     }
@@ -743,7 +743,7 @@ class PhraseParser extends Parser {
 
 class DefParser extends Parser {
     error(tokenType) {
-        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+        throw new Error(`Line ${this.lineno}: Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
     }
 
     _key() {
