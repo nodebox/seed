@@ -163,9 +163,8 @@ class Token {
 }
 
 class Lexer {
-    constructor(text,line) {
+    constructor(text) {
         this.text = text;
-        this.line = line;
         this.pos = 0;
         this.currentChar = text.length > 0 ? text[this.pos] : null;
     }
@@ -213,8 +212,8 @@ class Lexer {
 }
 
 class PhraseLexer extends Lexer {
-    constructor(text,line) {
-        super(text,line);
+    constructor(text) {
+        super(text);
         this.insideRef = false;
     }
 
@@ -525,8 +524,9 @@ class Node {
 }
 
 class Parser {
-    constructor(lexer) {
+    constructor(lexer, lineno) {
         this.lexer = lexer;
+        this.lineno = lineno;
         this.currentToken = this.lexer.nextToken();
     }
 
@@ -645,7 +645,7 @@ class PhraseParser extends Parser {
         } else if (token.type === KEY) {
             this.consume(KEY);
             if(this.currentToken.type === KEY){
-                throw new Error(`Invalid syntax: Whitespace not allowed in identifier on line ${this.lexer.line} at position ${this.lexer.pos}`);
+                throw new Error(`Line ${this.lineno}: Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
             }
 
             node = new Node(NODE_KEY, { key: token.value });
@@ -750,7 +750,7 @@ class DefParser extends Parser {
         let key = this.currentToken.value;
         this.consume(KEY);
         if(this.currentToken.type === KEY){
-            throw new Error(`Invalid syntax: Whitespace not allowed in identifier on line ${this.lexer.line} at position ${this.lexer.pos}`);
+            throw new Error(`Line ${this.lineno}: Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
         }
         
         return key;
@@ -1040,9 +1040,9 @@ class Interpreter {
     }
 }
 
-function parsePhrase(phrase, line) {
-    const lexer = new PhraseLexer(phrase, line);
-    const parser = new PhraseParser(lexer);
+function parsePhrase(phrase, lineno) {
+    const lexer = new PhraseLexer(phrase);
+    const parser = new PhraseParser(lexer, lineno);
     const tree = parser.parse();
     return tree;
 }
@@ -1174,7 +1174,7 @@ async function parsePhraseBook(s, loadSketch) {
             currentPhrase.lines.push(i+1);
         } else if (trimmedLine.endsWith(':')) {
             // Keys end with ":"
-            let parser = new DefParser(new DefLexer(trimmedLine,(i+1)));
+            let parser = new DefParser(new DefLexer(trimmedLine), (i+1));
             currentPhrase = parser.parse();
             currentPhrase.values = [];
             currentPhrase.lines = [];
