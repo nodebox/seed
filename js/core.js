@@ -549,13 +549,13 @@ class Parser {
 
 class PhraseParser extends Parser {
     error(tokenType) {
-        throw new Error(`Line ${this.lineno}: Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
     }
 
     _filters(node) {
         while (this.currentToken.type === FILTER) {
             if (this.currentToken.value === '') {
-                throw new Error(`Line ${this.lineno}: Naming Error. Encountered a filter token (|) at position ${ this.lexer.pos } without a filter name.`);
+                throw new Error(`Naming Error. Encountered a filter token (|) at position ${ this.lexer.pos } without a filter name.`);
             }
             node = new Node(NODE_FILTER, { node, name: this.currentToken.value });
             this.consume(FILTER);
@@ -567,13 +567,13 @@ class PhraseParser extends Parser {
     _range(node) {
         if (this.currentToken.type === RANGE) {
             if (node.type === NODE_STRING && node.value.length !== 1) {
-                throw new Error(`Line ${this.lineno}: Range Error: Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
+                throw new Error(`Range Error: Only single character strings can be part of a range. The encountered string '${ node.value }' at position ${ this.lexer.pos } has a length of ${ node.value.length }.`);
             }
             this.consume(RANGE);
             let start = node;
             let end = this.factor(false);
             if (end.type === NODE_STRING && end.value.length !== 1) {
-                throw new Error(`Line ${this.lineno}: Range Error: Only single character strings can be part of a range. The encountered string '${ end.value }' at position ${ this.lexer.pos } has a length of ${ end.value.length }.`);
+                throw new Error(`Range Error: Only single character strings can be part of a range. The encountered string '${ end.value }' at position ${ this.lexer.pos } has a length of ${ end.value.length }.`);
             }
             if (start.type === NODE_KEY && start.key.length === 1 && !start.parameters) {
                 start = new Node(NODE_CHAR, { value: start.key });
@@ -645,7 +645,7 @@ class PhraseParser extends Parser {
         } else if (token.type === KEY) {
             this.consume(KEY);
             if(this.currentToken.type === KEY){
-                throw new Error(`Line ${this.lineno}: Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
+                throw new Error(`Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
             }
 
             node = new Node(NODE_KEY, { key: token.value });
@@ -656,11 +656,11 @@ class PhraseParser extends Parser {
             try {
                 node = this.expr();
             } catch (e) {
-                throw new Error(`Line ${this.lineno}: Error. Empty expression at position ${this.lexer.pos}.`);
+                throw new Error(`Error. Empty expression at position ${this.lexer.pos}.`);
             }
             this.consume(RPAREN);
         } else {
-            throw new Error(`Line ${this.lineno}: Invalid syntax: expected a symbol (an integer, float, string, ...) at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+            throw new Error(`Invalid syntax: expected a symbol (an integer, float, string, ...) at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
         }
         if (parseFiltersRange) {
             node = this._filters(node);
@@ -687,7 +687,7 @@ class PhraseParser extends Parser {
         if (this.currentToken.type === REF_END) {
             return new Node(NODE_NO_OP);
         } else if (this.currentToken.type === RPAREN) {
-            throw new Error(`Line ${this.lineno}: Invalid syntax: Encountered ) symbol at position ${this.lexer.pos} but no ( was seen.`);
+            throw new Error(`Invalid syntax: Encountered ) symbol at position ${this.lexer.pos} but no ( was seen.`);
         }
         let node = this.term();
         while (this.currentToken.type === PLUS || this.currentToken.type === MINUS) {
@@ -705,7 +705,7 @@ class PhraseParser extends Parser {
     ref() {
         let node = this.expr();
         if (this.currentToken.type !== REF_END) {
-            throw new Error(`Line ${this.lineno}: Invalid syntax: expected end of reference at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+            throw new Error(`Invalid syntax: expected end of reference at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
         }
         return new Node(NODE_REF, { node });
     }
@@ -733,24 +733,29 @@ class PhraseParser extends Parser {
     }
 
     parse() {
-        const node = this.phrase();
-        if (this.currentToken.type !== EOF) {
-            this.error(EOF);
+        try{
+            const node = this.phrase();
+            if (this.currentToken.type !== EOF) {
+                this.error(EOF);
+            }
+            return node;
         }
-        return node;
+        catch(e){
+            throw new Error(`Line ${this.lineno}: ${e.message}`);
+        }
     }
 }
 
 class DefParser extends Parser {
     error(tokenType) {
-        throw new Error(`Line ${this.lineno}: Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
+        throw new Error(`Invalid syntax: expected a symbol of type ${tokenType} at position ${this.lexer.pos}, but encountered ${this.currentToken.type} instead.`);
     }
 
     _key() {
         let key = this.currentToken.value;
         this.consume(KEY);
         if(this.currentToken.type === KEY){
-            throw new Error(`Line ${this.lineno}: Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
+            throw new Error(`Invalid syntax: Whitespace not allowed in identifier at position ${this.lexer.pos}`);
         }
         
         return key;
@@ -780,16 +785,21 @@ class DefParser extends Parser {
     }
 
     parse() {
-        const key = this._key();
-        const parameters = this._parameters();
-        this.consume(COLON);
-        if (this.currentToken.type !== EOF) {
-            this.error(EOF);
+        try{
+            const key = this._key();
+            const parameters = this._parameters();
+            this.consume(COLON);
+            if (this.currentToken.type !== EOF) {
+                this.error(EOF);
+            }
+            if (parameters.length === 0) {
+                return {key};
+            } else {
+                return {key, parameters};
+            }
         }
-        if (parameters.length === 0) {
-            return {key};
-        } else {
-            return {key, parameters};
+        catch(e){
+            throw new Error(`Line ${this.lineno}: ${e.message}`);
         }
     }
 }
@@ -1036,7 +1046,12 @@ class Interpreter {
     }
 
     interpret() {
-        return this.visit(this.phrase.tree);
+        try{
+            return this.visit(this.phrase.tree);
+        }
+        catch(e){
+            throw new Error(`Line ${this.phrase.lineno}: ${e.message}`)
+        }
     }
 }
 
@@ -1178,6 +1193,7 @@ async function parsePhraseBook(s, loadSketch) {
             currentPhrase = parser.parse();
             currentPhrase.values = [];
             currentPhrase.lines = [];
+            currentPhrase.lineno = i+1;
             phrases.push(currentPhrase);
         } else {
             throw new Error(`Line ${ i + 1 }: do not know what to do with line "${line}".`);
@@ -1203,7 +1219,8 @@ async function parsePhraseBook(s, loadSketch) {
     }
     const phraseBook = {};
     for (let phrase of phrases) {
-        phraseBook[phrase.key] = phrase.values.map((text,index) => ({text, tree: parsePhrase(text,phrase.lines[index])}));
+        phraseBook[phrase.key] = phrase.values.map((text,index) => ({text, tree: parsePhrase(text,phrase.lines[index]), lineno:phrase.lines[index]}));
+        phraseBook[phrase.key].lineno = phrase.lineno;
         if (phrase.parameters) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
