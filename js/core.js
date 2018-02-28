@@ -948,14 +948,30 @@ class Interpreter {
             }
             return this.globalMemory[name];
         } else {
-            let randomOrder = [3,4,2,5,0,1,6];//will be randomized
+            if ( !this.phraseBook[node.key].randomOrder ) {
+                //Fisher-Yates Shuffle
+                let tempRandOrder = Array.from(this.phraseBook[node.key]);
+                
+                let currentIndex = tempRandOrder.length;
+                while (currentIndex !== 0) {
+                    let randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex -= 1;
+
+                    let temporaryValue = tempRandOrder[currentIndex];
+                    tempRandOrder[currentIndex] = tempRandOrder[randomIndex];
+                    tempRandOrder[randomIndex] = temporaryValue;
+                }
+                this.phraseBook[node.key].randomOrder = tempRandOrder;
+            }
+            
+            let randomOrder = this.phraseBook[node.key].randomOrder;
             let nodeKey = this.phraseBook[node.key];
             let counter = nodeKey.count;
     
-            if(counter == (randomOrder.length-1)) nodeKey.count = 0;
+            if(counter === (randomOrder.length-1)) nodeKey.count = 0;
             else nodeKey.count += 1;
             
-            return nodeKey[randomOrder[counter]].text;
+            return randomOrder[counter].text;
         }
     }
 
