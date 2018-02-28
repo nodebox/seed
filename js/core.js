@@ -115,6 +115,7 @@ const LBRACK = '[';
 const RBRACK = ']';
 const COMMA = ',';
 const COLON = ':';
+const TILDEN = '~';
 
 const DIGITS = '0123456789';
 const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -293,7 +294,7 @@ class PhraseLexer extends Lexer {
             this.skipWhitespace();
             continue;
         }
-        while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+        while (this.currentChar !== null && (ALPHANUM.indexOf(this.currentChar) !== -1 || this.currentChar === TILDEN)) {
             result += this.currentChar;
             this.advance();
         }
@@ -939,31 +940,23 @@ class Interpreter {
         return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime);
     }
 
-    visitNamedKey(node) {
-        switch(node.name){
-            case 'one': 
-                const name = `${node.key}:${node.name}`;
-                if (!this.globalMemory[name]) {
-                    this.globalMemory[name] = this.visitKey(node);
-                }
-                return this.globalMemory[name];
-                break;
-
-            case 'site': 
-                let randomOrder = [3,4,2,5,0,1,6];//will be randomized
-                let nodeKey = this.phraseBook[node.key];
-                let counter = nodeKey.count;
-        
-                if(counter == (randomOrder.length-1)) nodeKey.count = 0;
-                else nodeKey.count += 1;
-        
-                return nodeKey[randomOrder[counter]].text;
-                break;
-
-            default:
-                throw new Error(`Cannot find ${node.name} name`);
-                break;            
-        }        
+    visitNamedKey(node) {        
+        if (node.name.indexOf(TILDEN) === -1) {
+            const name = `${node.key}:${node.name}`;
+            if (!this.globalMemory[name]) {
+                this.globalMemory[name] = this.visitKey(node);
+            }
+            return this.globalMemory[name];
+        } else {
+            let randomOrder = [3,4,2,5,0,1,6];//will be randomized
+            let nodeKey = this.phraseBook[node.key];
+            let counter = nodeKey.count;
+    
+            if(counter == (randomOrder.length-1)) nodeKey.count = 0;
+            else nodeKey.count += 1;
+            
+            return nodeKey[randomOrder[counter]].text;
+        }
     }
 
     visitRepeatFilter(node) {
