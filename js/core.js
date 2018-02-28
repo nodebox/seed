@@ -434,7 +434,7 @@ class PhraseLexer extends Lexer {
             } else if (this.checkEscapeChar('}')) {
                 result += '}';
                 this.advance();
-                this.advance();line
+                this.advance();
             } else {
                 result += this.currentChar;
                 this.advance();
