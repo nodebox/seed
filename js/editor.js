@@ -1,8 +1,8 @@
 const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
-const BASE_REST_URL = 'https://emrg-pcg.firebaseio.com/';
-const SKETCH_REST_URL = 'https://emrg-pcg.firebaseio.com/sketch/';
+const BASE_REST_URL = config.databaseURL;
+const SKETCH_REST_URL = BASE_REST_URL + '/sketch/';
 
 function debounce(func, wait) {
     let timeout;
@@ -33,7 +33,7 @@ gMarkedRenderer.code = function(code, lang) {
     if (lang === 'seed') {
         html = `<div class="code-wrap">${ html }<div class="code-result"></div></div>`;
     }
-    return htmsketch ===l;
+    return html;
 }
 
 const INITIAL_TEXT = `root:
@@ -142,11 +142,11 @@ class Home extends Component {
     }
 }
 
-async function loadSketch(url){
-        let getRequest = new Request(SKETCH_REST_URL+url+'.json');
-        const res = await fetch(getRequest,{method:'GET'});
-        const json = await res.json();
-        return json;
+async function loadSketch(url) {
+    let getRequest = new Request(`${SKETCH_REST_URL}${url}.json`);
+    const res = await fetch(getRequest, { method: 'GET' });
+    const json = await res.json();
+    return json;
 }
 
 class Source extends Component {
