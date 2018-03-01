@@ -1,6 +1,9 @@
 const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
+const BASE_REST_URL = 'https://emrg-pcg.firebaseio.com/';
+const SKETCH_REST_URL = 'https://emrg-pcg.firebaseio.com/sketch/';
+
 function debounce(func, wait) {
     let timeout;
     return function() {
@@ -30,7 +33,7 @@ gMarkedRenderer.code = function(code, lang) {
     if (lang === 'seed') {
         html = `<div class="code-wrap">${ html }<div class="code-result"></div></div>`;
     }
-    return html;
+    return htmsketch ===l;
 }
 
 const INITIAL_TEXT = `root:
@@ -139,29 +142,11 @@ class Home extends Component {
     }
 }
 
-class LoadSketch {
-    constructor() {
-        this.online = false;
-    }
-
-    async download(url) {
-        this.goOnline();
-        return await firebase.database().ref(url).once('value');
-    }
-
-    goOnline() {
-        if (!this.online) {
-            firebase.database().goOnline();
-            this.online = true;
-        }
-    }
-
-    goOffline() {
-        if (this.online) {
-            firebase.database().goOffline();
-            this.online = false;
-        }
-    }
+async function loadSketch(url){
+        let getRequest = new Request(SKETCH_REST_URL+url+'.json');
+        const res = await fetch(getRequest,{method:'GET'});
+        const json = await res.json();
+        return json;
 }
 
 class Source extends Component {
@@ -221,9 +206,7 @@ class Editor extends Component {
     async generate(parse=true) {
         try {
             if (parse) {
-                const loadSketch = this.state.loadSketch || new LoadSketch();
                 this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
-                loadSketch.goOffline();
             }
             const result = generateString(this.phraseBook, 'root', {}, this.state.seed);
             this.setState({ result: result, debugOutput: '' });
@@ -232,7 +215,7 @@ class Editor extends Component {
         }
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         document.querySelector('html').classList.add('fullscreen');
         let localSource;
         if (!this.props.id) {
@@ -250,34 +233,31 @@ class Editor extends Component {
             }
             this.generate();
         } else {
-            const loadSketch = new LoadSketch();
-            this.setState({ loadSketch });
-            loadSketch.download(`sketch/${this.props.id}`).then(snap => {
-                const sketch = Object.assign({ key: this.props.id }, snap.val());
-                let newState = { loading: false, source: sketch.source };
-                localSource = window.localStorage.getItem(this.props.id);
-                if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
-                    newState.origSource = sketch.source;
-                    newState.source = localSource;
-                }
-                const urlSeed = getURLParameter('seed');
-                if (urlSeed) {
-                    newState.seed = urlSeed;
-                } else if (sketch.seed) {
-                    newState.seed = sketch.seed;
-                } else {
-                    newState.seed = this.state.seed;
-                }
+            const json = await loadSketch(this.props.id);
+            const sketch = Object.assign({ key: this.props.id }, json);
+            let newState = { loading: false, source: sketch.source };
+            localSource = window.localStorage.getItem(this.props.id);
+            if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
+                newState.origSource = sketch.source;
+                newState.source = localSource;
+            }
+            const urlSeed = getURLParameter('seed');
+            if (urlSeed) {
+                newState.seed = urlSeed;
+            } else if (sketch.seed) {
+                newState.seed = sketch.seed;
+            } else {
+                newState.seed = this.state.seed;
+            }
 
-                this.setState(newState);
-                if (this.props.onSourceChanged) {
-                    this.props.onSourceChanged(newState.source, true, localSource !== null && localSource !== undefined);
-                }
-                if (this.props.onSeedChanged) {
-                    this.props.onSeedChanged(newState.seed, true);
-                }
-                this.generate();
-            });
+            this.setState(newState);
+            if (this.props.onSourceChanged) {
+                this.props.onSourceChanged(newState.source, true, localSource !== null && localSource !== undefined);
+            }
+            if (this.props.onSeedChanged) {
+                this.props.onSeedChanged(newState.seed, true);
+            }
+            this.generate();
         }
     }
 
@@ -486,7 +466,7 @@ class Embed extends Component {
 class Docs extends Component {
     constructor(props) {
         super(props);
-        this.state = { page: undefined, html: 'Loading...', loadSketch: new LoadSketch() };
+        this.state = { page: undefined, html: 'Loading...' };
     }
 
     render(props) {
@@ -544,7 +524,6 @@ class Docs extends Component {
         this.onPage();
         if (window.location.pathname.split('/')[1] === 'docs') {
             let cw = document.getElementsByClassName('code-wrap');
-            const loadSketch = this.state.loadSketch;
             for (let i = 0; i < cw.length; i += 1) {
                 let el = cw[i];
                 let code = el.getElementsByTagName('code')[0];
@@ -556,7 +535,6 @@ class Docs extends Component {
                     .catch(err => { codeResult.innerHTML = err; });
                 }
             }
-            loadSketch.goOffline();
         }
     }
 }
