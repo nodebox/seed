@@ -115,6 +115,7 @@ const LBRACK = '[';
 const RBRACK = ']';
 const COMMA = ',';
 const COLON = ':';
+const TILDEN = '~';
 
 const DIGITS = '0123456789';
 const ALPHA = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -293,7 +294,7 @@ class PhraseLexer extends Lexer {
             this.skipWhitespace();
             continue;
         }
-        while (this.currentChar !== null && ALPHANUM.indexOf(this.currentChar) !== -1) {
+        while (this.currentChar !== null && (ALPHANUM.indexOf(this.currentChar) !== -1 || this.currentChar === TILDEN)) {
             result += this.currentChar;
             this.advance();
         }
@@ -954,12 +955,39 @@ class Interpreter {
         return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime);
     }
 
-    visitNamedKey(node) {
-        const name = `${node.key}:${node.name}`;
-        if (!this.globalMemory[name]) {
-            this.globalMemory[name] = this.visitKey(node);
+    visitNamedKey(node) {        
+        if (node.name.indexOf(TILDEN) === -1) {
+            const name = `${node.key}:${node.name}`;
+            if (!this.globalMemory[name]) {
+                this.globalMemory[name] = this.visitKey(node);
+            }
+            return this.globalMemory[name];
+        } else {
+            if ( !this.phraseBook[node.key].randomOrder ) {
+                //Fisher-Yates Shuffle
+                let tempRandOrder = Array.from(this.phraseBook[node.key]);
+                
+                let currentIndex = tempRandOrder.length;
+                while (currentIndex !== 0) {
+                    let randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex -= 1;
+
+                    let temporaryValue = tempRandOrder[currentIndex];
+                    tempRandOrder[currentIndex] = tempRandOrder[randomIndex];
+                    tempRandOrder[randomIndex] = temporaryValue;
+                }
+                this.phraseBook[node.key].randomOrder = tempRandOrder;
+            }
+            
+            let randomOrder = this.phraseBook[node.key].randomOrder;
+            let nodeKey = this.phraseBook[node.key];
+            let counter = nodeKey.count;
+    
+            if(counter === (randomOrder.length-1)) nodeKey.count = 0;
+            else nodeKey.count += 1;
+            
+            return randomOrder[counter].text;
         }
-        return this.globalMemory[name];
     }
 
     visitRepeatFilter(node) {
@@ -1219,6 +1247,12 @@ async function parsePhraseBook(s, loadSketch) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
     }
+
+    //to help keep track of how many times has a reference been referred to
+    for(k in phraseBook){
+        phraseBook[k].count = 0;
+    }
+    
     phraseBook['%preamble'] = preamble;
     phraseBook['%imports'] = imports;
     return phraseBook;
