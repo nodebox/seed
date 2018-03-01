@@ -171,6 +171,9 @@ class Source extends Component {
         if (this.codeMirror.getValue() !== nextProps.source) {
             this.codeMirror.setValue(nextProps.source);
         }
+        if (nextProps.importError) {
+            this.codeMirror.options.readOnly = true;
+        }
     }
 
     onChanged(doc, change) {
@@ -234,6 +237,14 @@ class Editor extends Component {
             this.generate();
         } else {
             const json = await loadSketch(this.props.id);
+            if (json === null) {
+                const err = `Error: Could not import sketch named "${this.props.id}".`;
+                this.setState({ loading: false, debugOutput: err, source: err });
+                if (this.props.onImportError) {
+                    this.props.onImportError();
+                }
+                return;
+            }
             const sketch = Object.assign({ key: this.props.id }, json);
             let newState = { loading: false, source: sketch.source };
             localSource = window.localStorage.getItem(this.props.id);
@@ -365,7 +376,7 @@ class Editor extends Component {
                     h(SeedPicker, { seed: this.state.seed, onSetSeed: this.onSetSeed.bind(this), onPrevSeed: this.onPrevSeed.bind(this), onNextSeed: this.onNextSeed.bind(this) })
                 ),
                 h('div', { className: 'editor__source' },
-                    h(Source, { source, loading: this.state.loading, onSourceChanged: this.onSourceChanged.bind(this) })
+                    h(Source, { source, loading: this.state.loading, importError: props.importError, onSourceChanged: this.onSourceChanged.bind(this) })
                 ),
                 debugView
             ),
@@ -390,6 +401,10 @@ class Sketch extends Component {
     constructor(props) {
         super(props);
         this.state = { saving: false, unsaved: false, source: undefined, seed: undefined };
+    }
+
+    onImportError() {
+        this.setState({ importError: true });
     }
 
     onSourceChanged(source, initialLoad, localSource=false) {
@@ -442,10 +457,12 @@ class Sketch extends Component {
         let saveLabel = state.saving ? 'Saving...' : 'Save';
         return h('div', {class: 'app'},
             h(Header, { unsaved: !!state.unsaved },
-                h('button', {class: 'button save-button' + (state.unsaved ? ' unsaved' : ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
+                h('button', {class: 'button save-button' + (state.unsaved ? ' unsaved' : '') + (state.importError ? ' disabled': ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
             ),
             h(Editor, {
                 id: props.id,
+                importError: state.importError,
+                onImportError: this.onImportError.bind(this),
                 onSourceChanged: this.onSourceChanged.bind(this),
                 onSeedChanged: this.onSeedChanged.bind(this),
                 headerRight: h('a', { href:'/docs', target: '_blank' }, 'Documentation')

@@ -130,6 +130,10 @@ a.underline {
     opacity: 1.0;
 }
 
+.header__nav .save-button.disabled {
+    display: none;
+}
+
 /* Page */
 
 .page {
