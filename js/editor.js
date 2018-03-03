@@ -2,7 +2,7 @@ const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
 const BASE_REST_URL = config.databaseURL;
-const SKETCH_REST_URL = BASE_REST_URL + '/sketch/';
+const SKETCH_REST_URL = BASE_REST_URL + '/sketch';
 
 function debounce(func, wait) {
     let timeout;
@@ -143,7 +143,7 @@ class Home extends Component {
 }
 
 async function loadSketch(url) {
-    let getRequest = new Request(`${SKETCH_REST_URL}${url}.json`);
+    let getRequest = new Request(`${SKETCH_REST_URL}/${url}.json`);
     const res = await fetch(getRequest, { method: 'GET' });
     const json = await res.json();
     return json;
@@ -226,7 +226,8 @@ class Editor extends Component {
                 localSource = window.localStorage.getItem('empty');
                 if (localSource !== null && localSource !== undefined) {
                     this.props.onSourceChanged(localSource, true, true);
-                    this.setState({ source: localSource, origSource: INITIAL_TEXT });
+                    this.setState({ source: localSource });
+                    this.props.setRemoteSource(INITIAL_TEXT);
                 } else {
                     this.props.onSourceChanged(INITIAL_TEXT, true);
                 }
@@ -248,8 +249,9 @@ class Editor extends Component {
             const sketch = Object.assign({ key: this.props.id }, json);
             let newState = { loading: false, source: sketch.source };
             localSource = window.localStorage.getItem(this.props.id);
+            let remoteSource;
             if (localSource !== null && localSource !== undefined && localSource !== sketch.source) {
-                newState.origSource = sketch.source;
+                remoteSource = sketch.source;
                 newState.source = localSource;
             }
             const urlSeed = getURLParameter('seed');
@@ -262,6 +264,9 @@ class Editor extends Component {
             }
 
             this.setState(newState);
+            if (remoteSource !== undefined) {
+                this.props.setRemoteSource(remoteSource);
+            }
             if (this.props.onSourceChanged) {
                 this.props.onSourceChanged(newState.source, true, localSource !== null && localSource !== undefined);
             }
@@ -351,10 +356,11 @@ class Editor extends Component {
         }
     }
 
-    restoreOriginalVersion() {
+    restoreRemoteVersion() {
         if (confirm('Are you sure you want to restore to the original version? This will discard your changes.')) {
-            this.setState({ source: this.state.origSource, origSource: undefined });
-            this.props.onSourceChanged(this.state.origSource, true);
+            this.setState({ source: this.props.remoteSource });
+            this.props.setRemoteSource(undefined);
+            this.props.onSourceChanged(this.props.remoteSource, true);
             window.localStorage.removeItem(this.props.id || 'empty');
             this.generate();
         }
@@ -364,10 +370,10 @@ class Editor extends Component {
         const debugView = h('div', { className: 'editor__debug' }, this.state.debugOutput);
         const source = state.loading ? 'Loading...' : state.source;
         let localVersionDiv;
-        if (this.state.origSource) {
+        if (this.props.remoteSource) {
             localVersionDiv = h('div', { className: 'localversion' },
                 'You\'ve previously made some changes to this sketch. ',
-                h('a', {class: 'underline', href: '#', onClick: this.restoreOriginalVersion.bind(this) }, 'Restore original version.'));
+                h('a', {class: 'underline', href: '#', onClick: this.restoreRemoteVersion.bind(this) }, 'Restore original version.'));
         }
         return h('div', { className: 'editor' }, localVersionDiv,
             h('div', { className: 'editor__source-wrap'},
@@ -407,6 +413,10 @@ class Sketch extends Component {
         this.setState({ importError: true });
     }
 
+    setRemoteSource(remoteSource) {
+        this.setState({ remoteSource });
+    }
+
     onSourceChanged(source, initialLoad, localSource=false) {
         this.setState({ unsaved: localSource || !initialLoad, source });
         if (!initialLoad) {
@@ -433,7 +443,7 @@ class Sketch extends Component {
         });
     }
 
-    onSave() {
+    async onSave() {
         console.assert(this.state.source !== undefined);
         console.assert(this.state.seed !== undefined);
         if (this.state.saving) return;
@@ -442,15 +452,21 @@ class Sketch extends Component {
         sketch.source = this.state.source;
         sketch.seed = this.state.seed;
         if (this.props.id) sketch.parent = this.props.id;
-        firebase.database().goOnline();
-        const ref = firebase.database().ref('sketch').push();
-        ref.set(sketch, () => {
+        const res = await fetch(new Request(`${SKETCH_REST_URL}.json`), { 
+            method: 'POST',
+            body: JSON.stringify(sketch), 
+            headers: new Headers({'Content-Type': 'application/json'})
+        });
+        const json = await res.json();
+        if (json) {
+            const ref = json.name;
             this.setState({ saving: false, unsaved: false });
             window.localStorage.removeItem(this.props.id || 'empty');
-            route(`/sketch/${ref.key}`);
-        }).then(() => {
-            firebase.database().goOffline();
-        });
+            this.setRemoteSource(undefined);
+            route(`/sketch/${json.name}`);
+        } else {
+            throw new Error('Error: Could not save sketch');
+        }
     }
 
     render(props, state) {
@@ -461,6 +477,8 @@ class Sketch extends Component {
             ),
             h(Editor, {
                 id: props.id,
+                remoteSource: this.state.remoteSource,
+                setRemoteSource: this.setRemoteSource.bind(this),
                 importError: state.importError,
                 onImportError: this.onImportError.bind(this),
                 onSourceChanged: this.onSourceChanged.bind(this),
