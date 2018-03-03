@@ -463,6 +463,7 @@ class Sketch extends Component {
             this.setState({ saving: false, unsaved: false });
             window.localStorage.removeItem(this.props.id || 'empty');
             this.setRemoteSource(undefined);
+            window.history.replaceState('', '', `${window.location.protocol}\/\/${window.location.host}/sketch/${json.name}`);
             route(`/sketch/${json.name}`);
         } else {
             throw new Error('Error: Could not save sketch');
