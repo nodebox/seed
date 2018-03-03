@@ -808,10 +808,10 @@ class Interpreter {
         this.globalScope = {};
     }
 
-    visit(node) {
+    async visit(node) {
         const methodName = 'visit' + node.type;
         if (this[methodName]) {
-            return this[methodName](node);
+            return await this[methodName](node);
         }
         this.genericVisit(node);
     }
@@ -824,38 +824,38 @@ class Interpreter {
         return '';
     }
 
-    visitUnaryOp(node) {
+    async visitUnaryOp(node) {
         const op = node.op;
         if (op === PLUS) {
-            return +this.visit(node.expression);
+            return + (await this.visit(node.expression));
         } else if (op === MINUS) {
-            return -this.visit(node.expression);
+            return - (await this.visit(node.expression));
         }
     }
 
-    visitBinaryOp(node) {
+    async visitBinaryOp(node) {
         const op = node.op;
         if (op === PLUS) {
-            return this.visit(node.left) + this.visit(node.right);
+            return await this.visit(node.left) + await this.visit(node.right);
         } else if (op === MINUS) {
-            return this.visit(node.left) - this.visit(node.right);
+            return await this.visit(node.left) - await this.visit(node.right);
         } else if (op === MUL) {
-            return this.visit(node.left) * this.visit(node.right);
+            return await this.visit(node.left) * await this.visit(node.right);
         } else if (op === DIV) {
-            return this.visit(node.left) / this.visit(node.right);
+            return await this.visit(node.left) / await this.visit(node.right);
         }
     }
 
-    visitConcat(node) {
-        return this.visit(node.left) + this.visit(node.right);
+    async visitConcat(node) {
+        return await this.visit(node.left) + await this.visit(node.right);
     }
 
     visitText(node) {
         return node.text;
     }
 
-    visitRef(node) {
-        return String(this.visit(node.node));
+    async visitRef(node) {
+        return String(await this.visit(node.node));
     }
 
     visitString(node) {
@@ -874,7 +874,7 @@ class Interpreter {
         return node.value;
     }
 
-    visitRange(node) {
+    async visitRange(node) {
         let start, end;
         let startError, endError;
         if (node.start.type === NODE_CHAR) {
@@ -882,10 +882,10 @@ class Interpreter {
             if (this.localMemory[start] !== undefined) {
                 start = this.localMemory[start];
             } else if (this.phraseBook[start] !== undefined) {
-                start = this.visitKey(new Node(NODE_KEY, {key: start}));
+                start = await this.visitKey(new Node(NODE_KEY, {key: start}));
             }
         } else {
-            start = this.visit(node.start);
+            start = await this.visit(node.start);
         }
         if (typeof start === 'string' && String(parseFloat(start)) === start) {
             start = parseFloat(start);
@@ -895,10 +895,10 @@ class Interpreter {
             if (this.localMemory[end] !== undefined) {
                 end = this.localMemory[end];
             } else if (this.phraseBook[end] !== undefined) {
-                end = this.visitKey(new Node(NODE_KEY, {key: end}));
+                end = await this.visitKey(new Node(NODE_KEY, {key: end}));
             }
         } else {
-            end = this.visit(node.end);
+            end = await this.visit(node.end);
         }
         if (typeof end === 'string' && end.length === 1 && String(parseFloat(end)) === end) {
             end = parseFloat(end);
@@ -924,7 +924,7 @@ class Interpreter {
         }
     }
 
-    visitKey(node, searchLocal=true) {
+    async visitKey(node, searchLocal=true) {
         if (searchLocal && this.localMemory[node.key] !== undefined) {
             return this.localMemory[node.key];
         }
@@ -945,7 +945,7 @@ class Interpreter {
             for (let i = 0; i < parameters.length; i += 1) {
                 let name = parameters[i];
                 if (node.parameters && node.parameters[i]) {
-                    localMemory[name] = this.visit(node.parameters[i]);
+                    localMemory[name] = await this.visit(node.parameters[i]);
                 } else {
                     localMemory[name] = '';
                 }
@@ -954,19 +954,19 @@ class Interpreter {
         return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime);
     }
 
-    visitNamedKey(node) {
+    async visitNamedKey(node) {
         const name = `${node.key}:${node.name}`;
         if (!this.globalMemory[name]) {
-            this.globalMemory[name] = this.visitKey(node);
+            this.globalMemory[name] = await this.visitKey(node);
         }
         return this.globalMemory[name];
     }
 
-    visitRepeatFilter(node) {
+    async visitRepeatFilter(node) {
         if (!node.parameters || node.parameters.length === 0) {
             throw new Error('Repeat filter takes a positive integer argument.');
         }
-        const times = parseInt(this.visit(node.parameters[0]));
+        const times = parseInt(await this.visit(node.parameters[0]));
         if (isNaN(times)) {
             throw new Error('Repeat filter takes a positive integer argument.');
         } else if (times <= 0) {
@@ -974,7 +974,7 @@ class Interpreter {
         }
         let s = '';
         for (let i = 0; i < times; i += 1) {
-            s += this.visit(node.node);
+            s += await this.visit(node.node);
         }
         return s;
     }
@@ -984,11 +984,11 @@ class Interpreter {
         return evaluator();
     }
 
-    visitJSFilter(node) {
+    async visitJSFilter(node) {
         if (!node.parameters || node.parameters.length === 0) {
             throw new Error('JS filter takes at least one argument.');
         }
-        const source = this.visit(node.node);
+        const source = await this.visit(node.node);
         let evaluator;
         if (node.node.type === NODE_NAMED_KEY) {
             const name = `${node.key}:${node.name}:__evaluator`;
@@ -999,22 +999,24 @@ class Interpreter {
         } else {
             evaluator = this.jsEvaluator(source);
         }
-        const fnName = this.visit(node.parameters[0]);
+        const fnName = await this.visit(node.parameters[0]);
         let parameters = [];
         if (node.parameters.length > 1) {
-            parameters = node.parameters.slice(1).map(p => this.visit(p));
+            for (let i = 1; i < node.parameters.length; i += 1) {
+                parameters.push(await this.visit(node.parameters[i]));
+            }
         }
         return evaluator(fnName, parameters);
     }
 
-    visitFilter(node) {
+    async visitFilter(node) {
         const f = node.name;
         if (f === 'repeat') {
             return this.visitRepeatFilter(node);
         } else if (f === 'js') {
             return this.visitJSFilter(node);
         }
-        const v = this.visit(node.node);
+        const v = await this.visit(node.node);
         if (f === 'upper') {
             return String(v).toUpperCase();
         } else if (f === 'lower') {
