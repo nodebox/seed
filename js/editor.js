@@ -403,10 +403,82 @@ class Editor extends Component {
 
 Editor.prototype.onInput = debounce(Editor.prototype.onInput, 200);
 
+class FormInput extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { focus: false };
+    }
+
+    onFocus() {
+        this.setState({ focus: true });
+    }
+
+    onBlur() {
+        this.setState({ focus: false });
+    }
+
+    render(props, state) {
+        let errorDiv;
+        if (props.error) {
+            errorDiv = h('div', {class: 'form__input-error'}, props.error);
+
+        }
+        return h('div', {class: 'form__input-wrapper' + (props.error ? ' error' : '') + (state.focus ? ' focus' : '')},
+            h('input', {class: 'form__input' , placeholder: props.placeholder, value: props.value, onFocus: this.onFocus.bind(this), onBlur: this.onBlur.bind(this)}),
+            errorDiv
+        );
+    }
+}
+
+class FormSelect extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render(props, state) {
+        let options = [];
+        console.assert(props.values.length === props.labels.length);
+        for (let i = 0; i < props.values.length; i++) {
+            options.push(h('option', {value: props.values[i]}, props.labels[i]));
+        }
+        return h('div', {class: 'form__select-wrapper' + (props.error ? ' error' : '')},
+            h('span', {class: 'form__select-label'}, props.label),
+            h('select', {class: 'form__select'}, options)
+        );
+    }
+}
+
+class ShareModal extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { };
+    }
+
+    onPreventBubble(e) {
+        e.stopPropagation();
+    }
+
+    render(props, state) {
+        return h('div', {class: 'modal__background', onClick: this.props.onCancel},
+            h('div', {class: 'modal share-modal', onClick: this.onPreventBubble.bind(this)},
+                h('div', {class: 'modal__header'}, 'Share'),
+                h('div', {class: 'modal__body'},
+                    h('h2', {}, 'Twitter Bot'),
+                    h('form', {class: 'modal__form'},
+                        h(FormSelect, {label: 'Frequency:', values: [60, 120, 240, 360, 720], labels: ['every hour', 'every 2 hours', 'every 4 hours', 'every 6 hours', 'every 12 hours']}),
+                        h(FormInput, {class: 'error', placeholder: 'OAuth Key', error: 'Invalid key'}),
+                        h(FormInput, {placeholder: 'OAuth Secret'})
+                    )
+                )
+            )
+        );
+    }
+}
+
 class Sketch extends Component {
     constructor(props) {
         super(props);
-        this.state = { saving: false, unsaved: false, source: undefined, seed: undefined };
+        this.state = { saving: false, unsaved: false, source: undefined, seed: undefined, showShareModal: false };
     }
 
     onImportError() {
@@ -452,9 +524,9 @@ class Sketch extends Component {
         sketch.source = this.state.source;
         sketch.seed = this.state.seed;
         if (this.props.id) sketch.parent = this.props.id;
-        const res = await fetch(new Request(`${SKETCH_REST_URL}.json`), { 
+        const res = await fetch(new Request(`${SKETCH_REST_URL}.json`), {
             method: 'POST',
-            body: JSON.stringify(sketch), 
+            body: JSON.stringify(sketch),
             headers: new Headers({'Content-Type': 'application/json'})
         });
         const json = await res.json();
@@ -470,8 +542,16 @@ class Sketch extends Component {
         }
     }
 
+    onCancelPopup() {
+        this.setState({ showShareModal: false });
+    }
+
     render(props, state) {
         let saveLabel = state.saving ? 'Saving...' : 'Save';
+        let shareModal;
+        if (state.showShareModal) {
+            shareModal = h(ShareModal, { onCancel: this.onCancelPopup.bind(this) });
+        }
         return h('div', {class: 'app'},
             h(Header, { unsaved: !!state.unsaved },
                 h('button', {class: 'button save-button' + (state.unsaved ? ' unsaved' : '') + (state.importError ? ' disabled': ''), onClick: this.onSave.bind(this), disabled: state.saving}, saveLabel)
@@ -485,7 +565,8 @@ class Sketch extends Component {
                 onSourceChanged: this.onSourceChanged.bind(this),
                 onSeedChanged: this.onSeedChanged.bind(this),
                 headerRight: h('a', { href:'/docs', target: '_blank' }, 'Documentation')
-            })
+            }),
+            shareModal
         );
     }
 }

@@ -420,6 +420,119 @@ a.underline {
     min-height: 100%;
 }
 
+/* Share */
+
+.modal__background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.modal {
+    width: 100%;
+    position: relative;
+    background-color: #fff;
+    border-radius: 3px;
+    box-shadow: 0 0 0.5px rgba(0, 0, 0, 0.2), 0 2px 14px rgba(0, 0, 0, 0.15);
+}
+
+.modal__header {
+    height: 36px;
+    background: #222;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 12px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.share-modal {
+    max-width: 460px;
+    min-width: 300px;
+}
+
+.share-modal .modal__body {
+    padding: 20px 30px 24px;
+
+}
+
+.modal__body h2 {
+    font-weight: normal;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+.form__input-wrapper {
+    display: flex;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding-right: 6px;
+    margin-bottom: 16px;
+}
+
+.form__input-wrapper.focus {
+    border: 1px solid #30c2ff !important;
+}
+
+.form__input-wrapper.error {
+    border: 1px solid #f24822;
+}
+
+.form__input {
+    border: 1px solid transparent;
+    flex-grow: 1;
+    width: 90px;
+    padding: 0 6px;
+    margin: 2px;
+    height: 24px;
+    outline: none;
+    font: inherit;
+    font-size: 11px;
+}
+
+.form__input-error {
+    height: 24px;
+    line-height: 24px;
+    color: #f24822;
+    font-size: 11px;
+    text-align: right;
+    margin: 2px;
+}
+
+.form__select-wrapper {
+    margin-bottom: 16px;
+}
+
+.form__select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="9" height="6" viewBox="0 0 9 6"><polyline points="0,2 3,5 6,2" fill="none" stroke="black"/></svg>');
+    background-position: 100%;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    padding-right: 12px;
+}
+
+.form__select-label {
+    font-size: 11px;
+    margin-right: 14px;
+}
+
+
 /* Docs */
 
 .docs {
