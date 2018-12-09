@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Embed Example</title>
+</head>
+<body>
+  <button id="generate">Generate</button>
+  <div id="result"></div>
+  <script src="https://seed.emrg.be/js/core.js"></script>
+  <script src="https://seed.emrg.be/third_party/bundle.min.js"></script>
+<script>
+const SKETCH_ID = '-L0jT5zaERgBPaf3P6LP';
+
+async function fetchSketch(sketchId) {
+  const url = `https://emrg-pcg.firebaseio.com/sketch/${SKETCH_ID}.json`;
+  const res = await fetch(url);
+  return await res.json();
+}
+
+async function loadSketch(seed) {
+  const sketch = await fetchSketch(SKETCH_ID);
+  const phraseBook = await parsePhraseBook(sketch.source, fetchSketch);
+  return phraseBook;
+}
+
+async function onGenerate() {
+  if (!window.sketch) return;
+  const result = await generateString(window.sketch, 'root', {}, Date.now());
+  console.log(result);
+  document.querySelector('#result').innerHTML = result;
+}
+
+async function init() {
+  window.sketch = await loadSketch(SKETCH_ID);
+  document.querySelector('#generate').addEventListener('click', onGenerate);
+  onGenerate();
+}
+
+init();
+</script>
+</body>
