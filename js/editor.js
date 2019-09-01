@@ -452,9 +452,9 @@ class Sketch extends Component {
         sketch.source = this.state.source;
         sketch.seed = this.state.seed;
         if (this.props.id) sketch.parent = this.props.id;
-        const res = await fetch(new Request(`${SKETCH_REST_URL}.json`), { 
+        const res = await fetch(new Request(`${SKETCH_REST_URL}.json`), {
             method: 'POST',
-            body: JSON.stringify(sketch), 
+            body: JSON.stringify(sketch),
             headers: new Headers({'Content-Type': 'application/json'})
         });
         const json = await res.json();
@@ -575,6 +575,72 @@ class Docs extends Component {
     }
 }
 
+class View extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { result: 'Loading...' };
+        this.load();
+    }
+
+    async load() {
+        const json = await loadSketch(this.props.id);
+        if (json === null) {
+            const err = `Error: Could not import sketch named "${this.props.id}".`;
+            this.setState({ loading: false, debugOutput: err, source: err });
+            if (this.props.onImportError) {
+                this.props.onImportError();
+            }
+            return;
+        }
+        const sketch = Object.assign({ key: this.props.id }, json);
+        let newState = { loading: false, source: sketch.source };
+        const urlSeed = getURLParameter('seed');
+        if (urlSeed) {
+            newState.seed = urlSeed;
+        } else if (sketch.seed) {
+            newState.seed = sketch.seed;
+        } else {
+            newState.seed = this.state.seed;
+        }
+        this.setState(newState);
+        this.generate();
+    }
+
+    async generate(parse=true) {
+        try {
+            if (parse) {
+                this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
+            }
+            const result = await generateString(this.phraseBook, 'root', {}, this.state.seed);
+            console.log(result);
+            this.setState({ result: result, debugOutput: '' });
+        } catch (e) {
+            this.setState({ debugOutput: e.message });
+        }
+    }
+
+    onSetSeed(seed) {
+        this.setState({seed});
+        if (this.props.onSeedChanged) {
+            this.props.onSeedChanged(seed);
+        }
+        this.generate(false);
+    }
+
+    onGenerate() {
+        let seed = nextTextSeed(this.state.seed);
+        console.log(seed);
+        this.setState({ seed });
+        this.generate(false);
+    }
+
+    render(props) {
+        return h('div', {class: 'app view', onClick: this.onGenerate.bind(this) },
+            h('div', {class: 'docs__body', dangerouslySetInnerHTML: { __html: this.state.result}})
+        );
+    }
+}
+
 class NotFound extends Component {
     render() {
         return h('div', {class: 'app'},
@@ -595,6 +661,7 @@ class App extends Component {
                 h(Sketch, { path: '/sketch/:id' }),
                 h(Embed, { path: '/embed' }),
                 h(Embed, { path: '/embed/:id' }),
+                h(View, { path: '/view/:id' }),
                 h(Docs, { path: '/docs', page: 'index'}),
                 h(Docs, { path: '/docs/:page'}),
                 h(NotFound, { type: '404', default: true })
