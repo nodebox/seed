@@ -250,6 +250,7 @@ a.underline {
     display: flex;
     flex-direction: row;
     padding-top: var(--header-height);
+    overflow: hidden;
 }
 
 .embed .editor {
@@ -273,6 +274,7 @@ a.underline {
     width: 50%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .editor__toolbar {
@@ -364,6 +366,7 @@ a.underline {
     flex: 1;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .editor__debug {
@@ -384,6 +387,7 @@ a.underline {
     outline: none;
     border: none;
     flex: 1;
+    overflow: hidden;
 }
 
 .editor__area .CodeMirror {
