@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seed</title>
+</head>
+<body>
+    <script src="/third_party/bundle.min.js"></script>
+    <script src="/js/core.js"></script>
+    <script>
+    if (!document.location.search.startsWith('?id=')) {
+        throw new Error('No sketch ID');
+    }
+    const sketchId = document.location.search.substring(4);
+    console.log(sketchId);
+
+    async function loadSketch(id) {
+        const res = await fetch(`https://emrg-pcg.firebaseio.com/sketch/${id}.json`);
+        const json = await res.json();
+        const phraseBook = await parsePhraseBook(json.source, loadSketch);
+        return phraseBook;
+    }
+    (async() => {
+        const phraseBook = await loadSketch(sketchId);
+        const result = generateString(phraseBook, 'root', {}, 'ABC');
+        console.log(result);
+        document.write(result);
+    })();
+
+    </script>
+</body>
+</html>
