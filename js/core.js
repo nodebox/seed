@@ -1202,7 +1202,7 @@ async function parsePhraseBook(s, loadSketch) {
         let o = importSketches[i];
         let sketch;
         if (importedSketches[o.name]) {
-            sketch = importedSketches[o.name];
+            sketch = importedSketches[o.name]; console.log(item);
         } else {
             sketch = await loadSketch(o.name);
             if (sketch === null || sketch.source === undefined) {
@@ -1221,6 +1221,36 @@ async function parsePhraseBook(s, loadSketch) {
             phraseBook[phrase.key].parameters = phrase.parameters;
         }
     }
+    let references = [];
+    let definedRef = [];
+    function traverse(x){
+        if(x.type === "Concat"){
+            for(key in x){
+                if(x[key].type){
+                    traverse(x[key]);
+                }
+            }
+        }
+        else if(x.type === "Ref" && x.node.type === "Key" && references.indexOf(x.node.key) === -1){
+            references[references.length] = x.node.key;
+        }
+    }
+    for(k in phraseBook){
+        phraseBook[k].forEach(function(item){
+            traverse(item.tree);
+        });
+        definedRef[definedRef.length] = k;
+        if(phraseBook[k].parameters){
+            phraseBook[k].parameters.forEach(function(item){
+                if(definedRef.indexOf(item) === -1) definedRef[definedRef.length] = item;
+            });
+        }
+    }
+    references.forEach(function(item){
+        if(definedRef.indexOf(item) === -1){
+            throw new Error(`Cannot find reference to ${item}`);
+        }
+    });
     phraseBook['%preamble'] = preamble;
     phraseBook['%imports'] = imports;
     return phraseBook;
