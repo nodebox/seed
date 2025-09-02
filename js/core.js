@@ -1,25 +1,43 @@
-function rand(min, max) {
-    return min + Math.random() * (max - min);
+// Lightweight RNG (Mulberry32) for deterministic generation in this module.
+class Rng {
+    constructor(seed = 0) {
+        let s = seed | 0;
+        if (s === 0) s = 0x9e3779b9; // avoid zero state
+        this.state = s >>> 0;
+    }
+    random() {
+        // Returns float in [0,1)
+        let t = this.state += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
 }
 
-function choice(l) {
-    const index = Math.floor(Math.random() * l.length);
+function rand(rng, min, max) {
+    return min + rng.random() * (max - min);
+}
+
+function choice(rng, l) {
+    const index = Math.floor(rng.random() * l.length);
     return l[index];
 }
 
-function randomChar(min, max) {
-    min = min.charCodeAt(0);
-    max = max.charCodeAt(0);
-    charCode = Math.round(rand(min, max));
+function randomChar(rng, min, max) {
+    const minC = min.charCodeAt(0);
+    const maxC = max.charCodeAt(0);
+    const charCode = Math.round(rand(rng, minC, maxC));
     return String.fromCharCode(charCode);
 }
 
 function randomTextSeed() {
+    // Non-deterministic default seed helper used by the editor.
     let seed = '';
     for (let i = 0; i < 3; i++) {
         const min = 'A'.charCodeAt(0);
         const max = 'Z'.charCodeAt(0);
-        seed += String.fromCharCode(Math.round(rand(min, max)));
+        const charCode = Math.round((Math.random()) * (max - min) + min);
+        seed += String.fromCharCode(charCode);
     }
     return seed;
 }
@@ -55,29 +73,17 @@ function prevTextSeed(s) {
     return seedNumberToText(val - 1);
 }
 
-function applyFilters(s, filters) {
-    for (f of filters) {
-        if (f === 'upper') {
-            s = s.toUpperCase();
-        } else if (f === 'lower') {
-            s = s.toLowerCase();
-        } else if (f === 'title') {
-            s = s.toTitleCase();
-        } else if (f === 'sentence') {
-            s = s.substring(0, 1).toUpperCase() + s.substring(1);
-        } else {
-            throw new Error(`Unknown filter "${f}".`);
-        }
-    }
-    return s;
+// Helpers
+function toTitleCase(s) {
+    return String(s).replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 
-RegExp.escape = function(s) {
+function regexEscape(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-};
+}
 
 function getURLParameter(name, url) {
-    if (typeof window === 'undefined') { return false; }
+    if (typeof window === 'undefined') { return null; }
     if (!url) { url = window.location.search; }
     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
         results = regex.exec(url);
@@ -86,9 +92,12 @@ function getURLParameter(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-String.prototype.toTitleCase = function () {
-    return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-};
+function shouldTimeout() {
+    if (typeof window === 'undefined') return false; // never timeout in non-browser (e.g., Node)
+    const p = getURLParameter('timeout');
+    // default true; disable with ?timeout=false
+    return p !== 'false';
+}
 
 const VARIABLE_TAG_START = '{{';
 const VARIABLE_TAG_END = '}}';
@@ -131,7 +140,7 @@ const ANIMATION_TYPES = ['once', 'linear', 'bounce'];
 const MAX_LEVEL = 50;
 const TIMEOUT_MILLIS = 1000;
 
-const TIMEOUT = getURLParameter('timeout') !== 'false';
+// NOTE: Timeout is determined dynamically in shouldTimeout()
 
 function bounce(t) {
     const a = t * Math.PI * 2;
@@ -904,15 +913,15 @@ class Interpreter {
             end = parseFloat(end);
         }
         if (typeof start === 'number' && typeof end === 'number') {
-            return Math.floor(rand(start, end));
+            return Math.floor(rand(this.rng, start, end));
         }
         let min, max, charCode;
         if (typeof start === 'string' && start.length === 1 && typeof end === 'string' && end.length === 1) {
-            return randomChar(start, end);
+            return randomChar(this.rng, start, end);
         } else if (typeof start === 'string' && start.length === 1 && typeof end === 'number' && String(end).length === 1) {
-            return randomChar(start, String(end));
+            return randomChar(this.rng, start, String(end));
         } else if (typeof start === 'number' && String(start).length === 1 && typeof end === 'string' && end.length === 1) {
-            return randomChar(String(start), end);
+            return randomChar(this.rng, String(start), end);
         } else {
             if (typeof start === 'string') {
                 start = `"${start}"`;
@@ -938,7 +947,7 @@ class Interpreter {
             key = node.key;
             globalMemory = this.globalMemory;
         }
-        const phrase = lookupPhrase(phraseBook, key);
+        const phrase = lookupPhrase(phraseBook, key, this.rng);
         const localMemory = {};
         const parameters = phraseBook[key].parameters;
         if (parameters) {
@@ -951,7 +960,7 @@ class Interpreter {
                 }
             }
         }
-        return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime);
+        return evalPhrase(phraseBook, phrase, globalMemory, localMemory, this.t, this.level + 1, this.startTime, this.rng);
     }
 
     async visitNamedKey(node) {
@@ -1022,7 +1031,7 @@ class Interpreter {
         } else if (f === 'lower') {
             return String(v).toLowerCase();
         } else if (f === 'title') {
-            return String(v).toTitleCase();
+            return toTitleCase(String(v));
         } else if (f === 'sentence') {
             return String(v).substring(0, 1).toUpperCase() + String(v).substring(1);
         } else if (f === 'str') {
@@ -1065,22 +1074,22 @@ function maxLevel(phraseBook) {
     return MAX_LEVEL;
 }
 
-function evalPhrase(phraseBook, phrase, globalMemory, localMemory, t=0.0, level=0, startTime=0) {
+function evalPhrase(phraseBook, phrase, globalMemory, localMemory, t=0.0, level=0, startTime=0, rng) {
     if (level > maxLevel(phraseBook)) return '';
-    if (TIMEOUT && startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
+    if (shouldTimeout() && startTime > 0 && Date.now() - startTime > TIMEOUT_MILLIS) {
         throw new Error('Evaluation timed out. Do you have a recursive function?');
     }
-    let interpreter = new Interpreter({ phraseBook, phrase, globalMemory, localMemory, t, level, startTime });
+    let interpreter = new Interpreter({ phraseBook, phrase, globalMemory, localMemory, t, level, startTime, rng });
     return interpreter.interpret();
 }
 
-function lookupPhrase(phraseBook, key) {
+function lookupPhrase(phraseBook, key, rng) {
     const v = phraseBook[key];
     if (v === undefined) {
         throw new Error(`Could not find phrase with key "${key}".`);
     }
     console.assert(Array.isArray(v));
-    return choice(v);
+    return choice(rng, v);
 }
 
 function parsePreamble(preamble, key, value, lineno) {
@@ -1116,6 +1125,7 @@ function parsePreamble(preamble, key, value, lineno) {
         }
     } else if (key === 'script') {
         if (!value.endsWith('.js')) throw new Error(`Line ${lineno}: expecting script preamble to end with .js.`);
+        if (typeof document === 'undefined') return; // ignore outside browser
         const currentScripts = Array.from(document.head.getElementsByTagName('script'));
         if (currentScripts.some(tag => tag.src === value)) return;
         const tag = document.createElement('script');
@@ -1204,6 +1214,9 @@ async function parsePhraseBook(s, loadSketch) {
         if (importedSketches[o.name]) {
             sketch = importedSketches[o.name];
         } else {
+            if (!loadSketch) {
+                throw new Error(`Line ${ o.line }: Import requires a loader function.`);
+            }
             sketch = await loadSketch(o.name);
             if (sketch === null || sketch.source === undefined) {
                 throw new Error(`Line ${ o.line }: Could not import sketch named "${o.name}".`)
@@ -1227,7 +1240,14 @@ async function parsePhraseBook(s, loadSketch) {
 }
 
 function generateString(phraseBook, rootKey = 'root', globalMemory = {}, seed = 1234, t = 0.0) {
-    Math.seedrandom(seed);
+    // Support both numeric and text seeds (e.g., 'ABC') from the editor.
+    let numericSeed = seed;
+    if (typeof seed === 'string') {
+        numericSeed = seedTextToNumber(seed);
+    }
+    const rng = new Rng(numericSeed);
     const startTime = Date.now();
-    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey), globalMemory, {}, t, 0, startTime);
+    return evalPhrase(phraseBook, lookupPhrase(phraseBook, rootKey, rng), globalMemory, {}, t, 0, startTime, rng);
 }
+
+export { parsePhraseBook, generateString, randomTextSeed, nextTextSeed, prevTextSeed, getURLParameter };

@@ -1,0 +1,24 @@
+{
+  "name": "@ndbx/seed",
+  "version": "0.1.0",
+  "description": "Seed: procedural phrase book parser and generator.",
+  "type": "module",
+  "main": "./js/core.js",
+  "module": "./js/core.js",
+  "exports": {
+    ".": {
+      "import": "./js/core.js"
+    }
+  },
+  "files": [
+    "js/core.js"
+  ],
+  "keywords": [
+    "procedural",
+    "text",
+    "generator",
+    "grammar",
+    "seed"
+  ],
+  "license": "MIT"
+}

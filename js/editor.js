@@ -1,3 +1,5 @@
+import { parsePhraseBook, generateString, randomTextSeed, nextTextSeed, prevTextSeed, getURLParameter } from './core.js';
+
 const { h, render, Component } = preact;
 const { route, Router, Link } = preactRouter;
 
