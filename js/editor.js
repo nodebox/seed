@@ -213,7 +213,7 @@ class Editor extends Component {
             if (parse) {
                 this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
             }
-            const result = await generateString(this.phraseBook, 'root', {}, this.state.seed);
+            const result = await generateString(this.phraseBook, { seed: this.state.seed });
             this.setState({ result: result, debugOutput: '' });
         } catch (e) {
             this.setState({ debugOutput: e.message });
@@ -348,7 +348,7 @@ class Editor extends Component {
                 if (animationType === 'once' && durationSeconds <= elapsedSeconds) {
                     this.setState({ frame: 0, playing: false });
                 } else {
-                    const result = await generateString(this.phraseBook, 'root', {}, this.state.seed, t);
+                    const result = await generateString(this.phraseBook, { seed: this.state.seed, t });
                     this.setState({ frame: this.state.frame + 1, result: result, debugOutput: '' });
                     window.requestAnimationFrame(this.onDoFrame.bind(this));
                 }
@@ -613,7 +613,7 @@ class View extends Component {
             if (parse) {
                 this.phraseBook = await parsePhraseBook(this.state.source, loadSketch);
             }
-            const result = await generateString(this.phraseBook, 'root', {}, this.state.seed);
+            const result = await generateString(this.phraseBook, { seed: this.state.seed });
             console.log(result);
             this.setState({ result: result, debugOutput: '' });
         } catch (e) {

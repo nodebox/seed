@@ -25,7 +25,7 @@ async function loadSketch(seed) {
 
 async function onGenerate() {
   if (!window.sketch) return;
-  const result = await generateString(window.sketch, 'root', {}, Date.now());
+  const result = await generateString(window.sketch, { seed: Date.now() });
   console.log(result);
   document.querySelector('#result').innerHTML = result;
 }

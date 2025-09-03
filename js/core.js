@@ -1239,7 +1239,14 @@ async function parsePhraseBook(s, loadSketch) {
     return phraseBook;
 }
 
-function generateString(phraseBook, rootKey = 'root', globalMemory = {}, seed = 1234, t = 0.0) {
+function generateString(phraseBook, options = {}) {
+    const {
+        rootKey = 'root',
+        globalMemory = {},
+        seed = 1234,
+        t = 0.0,
+    } = options;
+
     // Support both numeric and text seeds (e.g., 'ABC') from the editor.
     let numericSeed = seed;
     if (typeof seed === 'string') {
