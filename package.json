@@ -20,5 +20,8 @@
     "grammar",
     "seed"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }
