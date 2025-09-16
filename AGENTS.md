@@ -1,27 +1,25 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Root contains `index.html` and `embed.html`. App code lives in `js/` (`core.js`, `editor.js`), styles in `css/` (`style.css`, `codemirror.css`), static images in `gallery/`, and third‑party bundles in `third_party/`. Reference docs/examples are under `_docs/`.
-- Build artifacts are written to `_build/` by `deploy.sh` and are not committed.
+
+The root hosts `index.html` and `embed.html` while app logic lives in `js/` (`core.js`, `editor.js`). Shared styles sit in `css/` (`style.css`, `codemirror.css`); static art belongs in `gallery/`; third-party bundles stay under `third_party/`. Generated assets land in `_build/` via `deploy.sh` and must not be committed. Reference docs and examples reside in `_docs/`.
 
 ## Build, Test, and Development Commands
-- Local serve: `npm install -g serve` (first run), then `serve -s` to serve the SPA (open the printed localhost URL).
-- Deploy: `npm install -g firebase-tools && firebase login` (once), then `./deploy.sh`. The script copies assets to `_build/`, appends cache‑busting timestamps to `.js/.css` in `index.html`, and runs `firebase deploy`.
-- Clean build (usually unnecessary): `rm -rf _build && ./deploy.sh`.
+
+Install the static server once with `npm install -g serve`, then run `serve -s` from the repo to preview the SPA locally. Deployment uses `./deploy.sh`, which stages files into `_build/`, appends cache-busting timestamps in `index.html`, and calls `firebase deploy`. For a clean rebuild run `rm -rf _build && ./deploy.sh` (usually unnecessary).
 
 ## Coding Style & Naming Conventions
-- JavaScript: ES6, 4‑space indent, semicolons. Prefer `const`/`let`, small pure helpers, and clear names. Functions `camelCase`; constants UPPER_SNAKE when shared. Filenames are lowercase with short words (e.g., `core.js`, `style.css`).
-- CSS: 4‑space indent; keep variables under `:root`; group component blocks and use concise class names.
-- No transpile/lint step—match existing style so code runs directly in modern browsers.
+
+JavaScript follows ES6 with 4-space indentation, semicolons, and `const`/`let`. Prefer narrow helpers, camelCase functions, and uppercase shared constants. CSS uses 4-space indentation, variables grouped in `:root`, and concise class names. Filenames are lowercase with short words (e.g., `core.js`, `style.css`). There is no transpilation or linting, so match the existing browser-ready style.
 
 ## Testing Guidelines
-- No automated tests currently.
-- Before submitting: run `serve -s`, navigate through routes (e.g., `/sketch`), try gallery links, and ensure no console errors.
+
+Automated tests are not in place. Before handing off changes, launch `serve -s`, walk through main routes such as `/sketch`, exercise gallery entries, and confirm the browser console stays clean.
 
 ## Commit & Pull Request Guidelines
-- Commits: short imperative subject (e.g., "Fix scrolling for long projects"), optional body for context. Keep changes focused.
-- PRs: include a clear description, linked issues, and screenshots/GIFs for UI changes. Call out behavior or config changes (e.g., Firebase rules/hosting). Ensure local checks above pass.
+
+Write commit subjects in the imperative mood (e.g., "Fix scrolling for long projects") with optional context bodies. Keep diffs focused and avoid touching `_build/`. Pull requests should describe the change, link issues, and include screenshots or GIFs for UI updates, plus note any configuration shifts like Firebase hosting changes.
 
 ## Security & Configuration Tips
-- Do not commit secrets. Firebase configuration is in `firebase.json`/`.firebaserc`, and `index.html` references only the database URL.
-- `_build/` is generated; avoid committing it. Prefer small, reviewable diffs.
+
+Do not commit secrets. Firebase settings live in `firebase.json` and `.firebaserc`; runtime config references only the database URL from `index.html`. Treat `_build/` as disposable output.
