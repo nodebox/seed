@@ -2,3 +2,5 @@
 *.log
 _build
 node_modules
+.firebase
+
