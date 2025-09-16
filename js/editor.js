@@ -517,6 +517,7 @@ class Docs extends Component {
             { id: 'css-tricks', title: 'Using CSS functionality' },
             { id: 'arguments', title: 'Working with arguments' },
             { id: 'cheat-sheet', title: 'Cheat Sheet' },
+            { id: 'seed-library', title: 'Seed as a Library' },
         ]
         const items = [];
         for (const page of PAGES) {
